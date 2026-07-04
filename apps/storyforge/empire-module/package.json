@@ -1,0 +1,19 @@
+{
+  "name": "@empire-os/storyforge-module",
+  "version": "4.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Empire OS EmpireModule adapter for StoryForge Engine",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@empire-os/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~5.4.0"
+  }
+}

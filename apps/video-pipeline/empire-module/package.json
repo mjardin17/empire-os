@@ -1,0 +1,23 @@
+{
+  "name": "@empire-os/video-pipeline-module",
+  "version": "1.0.0",
+  "description": "Empire OS EmpireModule adapter for the Video Bot Pipeline (auto_render.py + Council bots)",
+  "main": "dist/video-pipeline.module.js",
+  "types": "dist/video-pipeline.module.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@empire-os/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "@empire-os/core": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

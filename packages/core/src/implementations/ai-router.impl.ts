@@ -40,14 +40,17 @@ export interface AIProviderAdapter {
   isAvailable(): Promise<boolean>
 }
 
-// Routing table: task type → preferred provider
+// Routing table: task type → preferred provider order
+// Ollama (local, free) leads on cheap/routine tasks.
+// Claude leads on code/architecture. Gemini on research/long-context.
+// OpenAI for tasks that specifically require GPT models.
 const TASK_ROUTING: Record<AITask['type'], AIProvider[]> = {
-  code:           ['anthropic', 'deepseek', 'openai'],
-  research:       ['google', 'anthropic', 'openai'],
-  script:         ['google', 'anthropic', 'openai'],
-  copy:           ['openai', 'anthropic', 'google'],
-  summary:        ['anthropic', 'google', 'openai'],
-  classification: ['anthropic', 'google', 'ollama'],
+  code:           ['anthropic', 'ollama', 'openai', 'deepseek'],
+  research:       ['google',   'anthropic', 'ollama', 'openai'],
+  script:         ['google',   'anthropic', 'ollama', 'openai'],
+  copy:           ['ollama',   'openai',    'anthropic', 'google'],
+  summary:        ['ollama',   'anthropic', 'google',    'openai'],
+  classification: ['ollama',   'anthropic', 'google',    'openai'],
 }
 
 // Strategy → model selection heuristic

@@ -5,7 +5,8 @@ import {
   FileText, ShieldAlert, Shield, Check, Plus, HelpCircle, ArrowRight,
   TrendingUp, RefreshCw as LoopIcon, ExternalLink, Code, Copy, 
   Download, BookOpen, ChevronDown, ChevronUp, Star, DollarSign,
-  Search, MessageSquare, Compass, Coins
+  Search, MessageSquare, Compass, Coins,
+  Activity, Award, Plug, Film
 } from "lucide-react";
 import { SystemArchitecture } from "./components/SystemArchitecture";
 import { MathEngine } from "./components/MathEngine";
@@ -27,6 +28,17 @@ import AutomationCenter from "./components/AutomationCenter";
 import SettingsCenter from "./components/SettingsCenter";
 import { LayoutGrid } from "lucide-react";
 import CommandCenter from "./components/CommandCenter";
+import HealthMonitorPanel from "./components/HealthMonitorPanel";
+import ModelBenchmarkPanel from "./components/ModelBenchmarkPanel";
+import DiscoveryFeed from "./components/DiscoveryFeed";
+import ConnectorManager from "./components/ConnectorManager";
+import HiggsfieldStatus from "./components/HiggsfieldStatus";
+import EmpireAIRouterPanel from "./components/EmpireAIRouterPanel";
+// Phase 3
+import DiscoveryEngine from "./components/DiscoveryEngine";
+import BenchmarkEngine from "./components/BenchmarkEngine";
+import SelfImprovementEngine from "./components/SelfImprovementEngine";
+import DiscoveryDashboard from "./components/DiscoveryDashboard";
 
 const INITIAL_SCRIPT_TEMPLATE = `In this deep architectural teardown, we review how to move past modern React client-side monoliths handling isolated metadata. We explain how storing platform API keys directly on client user devices creates immense key disclosure vulnerability. Instead, we propose an enterprise topology utilizing Go FastAPI gateways, Temporal workflows, PostgreSQL pgvector style retrieval, and serverless FFmpeg pipelines on Fargate to manage high throughput contextual generations. Let's dive in!`;
 
@@ -869,6 +881,155 @@ export default function App() {
                 <div className="flex items-center gap-2">
                   <BookOpen className="w-4 h-4 text-indigo-400" />
                   <span>Knowledge Center</span>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Empire OS v3 — direct connections to localhost:3001 */}
+          <div className="mb-4">
+            <div className="px-3 py-1.5 text-[9px] font-mono font-bold tracking-widest text-slate-600 uppercase">
+              Empire OS v3
+            </div>
+            <div className="space-y-0.5">
+              <button
+                onClick={() => setCurrentWorkspace("empire-health")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "empire-health"
+                    ? "bg-emerald-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-emerald-400" />
+                  <span>Health Monitor</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("empire-router")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "empire-router"
+                    ? "bg-indigo-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Brain className="w-4 h-4 text-indigo-400" />
+                  <span>AI Router</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("empire-discovery")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "empire-discovery"
+                    ? "bg-cyan-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-cyan-400" />
+                  <span>Discovery Feed</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("empire-benchmark")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "empire-benchmark"
+                    ? "bg-amber-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-amber-400" />
+                  <span>Model Benchmark</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("empire-connectors")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "empire-connectors"
+                    ? "bg-purple-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Plug className="w-4 h-4 text-purple-400" />
+                  <span>Connectors</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("higgsfield")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "higgsfield"
+                    ? "bg-pink-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Film className="w-4 h-4 text-pink-400" />
+                  <span>Higgsfield AI</span>
+                </div>
+              </button>
+
+              {/* ── Phase 3 additions ── */}
+              <button
+                onClick={() => setCurrentWorkspace("discovery-dashboard")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "discovery-dashboard"
+                    ? "bg-blue-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <span>Discovery Hub</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("discovery-engine")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "discovery-engine"
+                    ? "bg-teal-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Compass className="w-4 h-4 text-teal-400" />
+                  <span>Discovery Engine</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("benchmark-engine")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "benchmark-engine"
+                    ? "bg-yellow-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Award className="w-4 h-4 text-yellow-400" />
+                  <span>Benchmark Engine</span>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCurrentWorkspace("self-improvement")}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium font-mono transition-all cursor-pointer ${
+                  currentWorkspace === "self-improvement"
+                    ? "bg-green-700 text-slate-100 shadow-md font-bold"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/25"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-green-400" />
+                  <span>Self Improvement</span>
                 </div>
               </button>
             </div>
@@ -2283,6 +2444,48 @@ export default function App() {
 
         {currentWorkspace === "knowledge" && (
           <KnowledgeCenter />
+        )}
+
+        {/* ── Empire OS v3 panels — direct connections to localhost:3001 ── */}
+        {currentWorkspace === "empire-health" && (
+          <HealthMonitorPanel />
+        )}
+
+        {currentWorkspace === "empire-router" && (
+          <EmpireAIRouterPanel />
+        )}
+
+        {currentWorkspace === "empire-discovery" && (
+          <DiscoveryFeed />
+        )}
+
+        {currentWorkspace === "empire-benchmark" && (
+          <ModelBenchmarkPanel />
+        )}
+
+        {currentWorkspace === "empire-connectors" && (
+          <ConnectorManager />
+        )}
+
+        {currentWorkspace === "higgsfield" && (
+          <HiggsfieldStatus />
+        )}
+
+        {/* ── Phase 3 workspaces ── */}
+        {currentWorkspace === "discovery-dashboard" && (
+          <DiscoveryDashboard />
+        )}
+
+        {currentWorkspace === "discovery-engine" && (
+          <DiscoveryEngine />
+        )}
+
+        {currentWorkspace === "benchmark-engine" && (
+          <BenchmarkEngine />
+        )}
+
+        {currentWorkspace === "self-improvement" && (
+          <SelfImprovementEngine />
         )}
 
         {/* DEEPSEEK & LLM CODEBASE INGRESS EXPORTER SECTION */}

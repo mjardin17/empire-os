@@ -1,6 +1,38 @@
 # Empire OS — Agent Memory
 
-**UPDATED: 2026-07-04 — CrossPost INTEGRATED. Video Pipeline INTEGRATED. Unit tests 129/129 PASSING. Empire Assistant V2 BUILT. HTTP SERVER BUILT (`apps/empire-os-server/`). Start with START_EMPIRE_OS.bat. Add ANTHROPIC_API_KEY to .env first.**
+**UPDATED: 2026-07-04 — Empire OS Phase 3 + Electron wrapper COMPLETE.**
+
+**Phase 1 backend:** 10 modules live (Dashboard, Store, Installer + 7 others).
+**Phase 2 frontend:** 6 React panels (Health Monitor, AI Router, Discovery Feed, Benchmark, Connectors, Higgsfield).
+**Phase 3:** 3 backend modules + 4 React components + 4 new sidebar entries.
+**Electron (NEW):** Native Windows desktop wrapper - apps/electron/
+
+Phase 3 backend (empire-os-server/):
+- discovery-engine.module.ts — live multi-source AI discovery (Ollama, HF, GitHub, MCP, ComfyUI) + JSON cache
+- benchmark-engine.module.ts — persist benchmark history, one model at a time, recharts-ready JSON
+- self-improvement.module.ts — recommendation engine with approve/dismiss/rollback, NEVER auto-installs
+
+Phase 3 frontend (crosspost-enterprise/src/components/):
+- DiscoveryEngine.tsx — search/filter/category/quality-score/copy-cmd interface
+- BenchmarkEngine.tsx — recharts BarChart + RadarChart, run benchmarks from UI
+- SelfImprovementEngine.tsx — approve/dismiss/rollback recommendation cards
+- DiscoveryDashboard.tsx — unified premium dashboard (new models, trending, benchmarks, recs, MCP)
+
+Electron desktop wrapper (apps/electron/):
+- main.ts — BrowserWindow loading localhost:3000, system tray (show/hide/autostart/quit), window state JSON, minimize-to-tray, single-instance lock, connection error overlay, IPC handlers
+- preload.ts — contextBridge exposes window.empireOS API (notify, getAutoStart, setAutoStart, minimizeToTray, getVersion, openExternal, isDesktop)
+- tsconfig.json — CommonJS target for Electron main process
+- package.json — electron 30 + electron-builder, npm run start / dist:win
+- assets/icon.png — 16x16 dark blue tray icon
+
+To build the desktop app:
+  cd C:\Users\jjard\empire-os\apps\electron
+  npm install
+  npm run start       (dev: launches Electron wrapping localhost:3000)
+  npm run dist:win    (production: generates installer in release/)
+
+COMMIT_SERVER.ps1 updated to copy all Phase 3 + Electron files.
+NEXT: Run COMMIT_SERVER.ps1, then: cd apps/electron && npm install && npm run start**
 
 ## What this is
 Empire OS is the management layer for the Viral Engine AI YouTube factory.
@@ -99,6 +131,14 @@ Bootstrap: `import { bootstrap } from '@empire-os/core'`
 | Video Bot Pipeline | `video-pipeline` | Python (FastAPI) | 8002 | ✅ ACTIVE — empire_server.py + VideoPipelineModule built |
 | Boss Listers | (plugin panel inside CrossPost) | React component in CrossPost | N/A | ✅ CLOSED — BossListers.tsx UI panel; no separate service needed |
 | Empire Assistant | `empire-assistant` | TypeScript (in-process) | 3001 | ✅ BUILT — runs inside empire-os-server, no separate port |
+| Model Manager | `model-manager` | TypeScript (in-process) | 3001 | ✅ BUILT — graphical Ollama model browser at /model-manager/ |
+| Discovery | `discovery` | TypeScript (in-process) | 3001 | ✅ BUILT — AI catalog, HF/GitHub trending, HW compat, benchmark at /discovery/ |
+| Health Monitor | `health-monitor` | TypeScript (in-process) | 3001 | ✅ BUILT — service status, RAM/CPU/disk, event log at /health-monitor/ |
+| Media Engine | `media-engine` | TypeScript (in-process) | 3001 | ✅ BUILT — video/image/audio/music routing + detection at /media-engine/ |
+| Knowledge Base | `knowledge-base` | TypeScript (in-process) | 3001 | ✅ BUILT — persistent memory store at /knowledge-base/ |
+| Empire Dashboard | `empire-dashboard` | TypeScript (in-process) | 3001 | ✅ BUILT — glassmorphism SPA, all modules unified at / (redirects here) |
+| Empire Store | `store` | TypeScript (in-process) | 3001 | ✅ BUILT — 40+ items: AI models, video, image, voice, ocr, dev tools at /store/ |
+| Empire Installer | `installer` | TypeScript (in-process) | 3001 | ✅ BUILT — pip/npm/winget/ollama installer at /installer/ |
 
 ## Registered Connectors (PluginRegistry)
 
@@ -133,8 +173,16 @@ See ARCHITECTURE.md — 10 checkboxes. All must pass before EA starts.
 
 ## AI Routing
 
-Claude=code/arch | Gemini=research/scripts | GPT=copy | Ollama=local fallback
+Default strategy: **cost** (Ollama wins all routine tasks — costPerMToken=0)
+Ollama=local/routine | Claude=code/arch | Gemini=research/scripts | OpenAI=GPT-specific | Goose=local dev agent
 StoryForge uses OpenRouter (routes to same models via one key).
+
+## Model Manager Packs
+
+coding | writing | research | image | video | creative
+Image Pack: llava:34b, llava-llama3:8b, minicpm-v:8b, moondream:1.8b
+Video Pack: video-llava:7b, llava:34b, minicpm-v:8b
+UI: http://localhost:3001/model-manager/ — browse/install/remove/register without terminal
 
 ## Ports
 

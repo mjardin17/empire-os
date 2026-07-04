@@ -1,0 +1,58 @@
+{
+  "name": "empire-os-desktop",
+  "version": "1.0.0",
+  "description": "Empire OS Desktop Wrapper - Native Windows app for CrossPost Enterprise",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "npm run build && electron .",
+    "dev": "tsc && electron . --inspect",
+    "dist:win": "npm run build && electron-builder --win --x64",
+    "pack": "npm run build && electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.viralengine.empireos",
+    "productName": "Empire OS",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/icon.png",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "deleteAppDataOnUninstall": false
+    },
+    "extraResources": [
+      {
+        "from": "assets",
+        "to": "assets",
+        "filter": ["**/*"]
+      }
+    ]
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0",
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0"
+  },
+  "keywords": ["empire-os", "electron", "viral-engine"],
+  "author": "Josh Jardin",
+  "license": "UNLICENSED",
+  "private": true
+}

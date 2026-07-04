@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Channel {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  platform  String    @default("youtube")
+  episodes  Episode[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Episode {
+  id          String   @id @default(cuid())
+  number      Int
+  title       String
+  status      String   @default("scripted") // scripted | rendering | rendered | uploaded
+  channelId   String
+  channel     Channel  @relation(fields: [channelId], references: [id])
+  scenesCount Int      @default(24)
+  filePath    String?
+  fileSizeMb  Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([channelId, number])
+}
+
+model RenderJob {
+  id        String   @id @default(cuid())
+  episodeId String
+  status    String   @default("queued") // queued | running | done | failed
+  startedAt DateTime?
+  finishedAt DateTime?
+  error     String?
+  createdAt DateTime @default(now())
+}
+
+model AgentLog {
+  id        String   @id @default(cuid())
+  agent     String
+  action    String
+  payload   Json?
+  result    String?
+  createdAt DateTime @default(now())
+}

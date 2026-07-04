@@ -1,0 +1,80 @@
+{
+  "system_name": "Empire OS Workspace Map",
+  "version": "3.0.0",
+  "local_host": {
+    "port_forwarding": "3000",
+    "ollama_api": "http://localhost:11434",
+    "python_server": "http://localhost:8000"
+  },
+  "directories": {
+    "root": {
+      "path": "/",
+      "owner": "Empire OS Controller",
+      "description": "Primary workspace containing applet build files, backend configurations, and global manifest specifications."
+    },
+    "src": {
+      "path": "/src",
+      "owner": "Vite-React Compiler",
+      "description": "Source code for the responsive, high-contrast dashboard, event components, and inspector UI."
+    },
+    "components": {
+      "path": "/src/components",
+      "owner": "UI/UX Module",
+      "description": "Modular React panels representing individual stations (Mission Control, Ollama, Video Creator, Inspector, CrossPost)."
+    },
+    "assets": {
+      "path": "/assets",
+      "owner": "Unified Assets Engine",
+      "description": "Persistent vault containing final compiled videos, scene clips, narrative wav files, and thumbnail posters."
+    }
+  },
+  "pipelines": [
+    {
+      "id": "video_pipeline",
+      "name": "Autonomous Video Creator Pipeline",
+      "entry_point": "/src/components/VideoCreator.tsx",
+      "backend_routes": [
+        "/api/video-pipeline/create",
+        "/api/video-pipeline/execute-step"
+      ],
+      "produces": [
+        "final_video.mp4",
+        "thumbnail.png",
+        "narration.wav",
+        "subtitles.srt",
+        "script.md",
+        "scene_prompts.json",
+        "metadata.json",
+        "description.txt",
+        "tags.txt"
+      ]
+    },
+    {
+      "id": "crosspost_pipeline",
+      "name": "Social Syndicate Distribution Router",
+      "entry_point": "/src/components/AutomationCenter.tsx",
+      "backend_routes": [
+        "/api/crosspost/publish",
+        "/api/crosspost/status"
+      ]
+    }
+  ],
+  "integrations": {
+    "gemini": {
+      "type": "Cloud SDK API",
+      "model_family": "Gemini 3.5 Suite",
+      "endpoints": ["process.env.GEMINI_API_KEY"],
+      "roles": ["Academic Research", "Comprehensive Fact Checking", "Structural Outlines", "SEO Optimization"]
+    },
+    "ollama": {
+      "type": "Local API Service",
+      "model_family": "DeepSeek / Qwen / Llama Models",
+      "endpoints": ["http://localhost:11434/api/generate", "http://localhost:11434/api/chat"],
+      "roles": ["Fast Screenplay Writing", "Creative Coding", "Translation", "Autonomous Command Assembly"]
+    }
+  },
+  "inter_agent_protocols": {
+    "event_bus": "/api/empire/event-bus",
+    "ai_router": "/api/empire/ai-router"
+  }
+}

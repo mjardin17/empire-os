@@ -1,0 +1,23 @@
+{
+  "name": "@empire-os/crosspost-module",
+  "version": "2.1.0",
+  "description": "Empire OS EmpireModule adapter for CrossPost Content Operating System",
+  "main": "dist/crosspost.module.js",
+  "types": "dist/crosspost.module.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@empire-os/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "@empire-os/core": "*"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

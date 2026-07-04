@@ -1,0 +1,12 @@
+{
+  "name": "CROSSPOST Content Operating System",
+  "description": "Enterprise-grade multi-agent content generation, predictive analytics scoring, and sovereign command center integration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

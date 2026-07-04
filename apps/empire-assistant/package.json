@@ -1,0 +1,10 @@
+{
+  "name": "@empire-os/empire-assistant",
+  "version": "2.0.0",
+  "description": "Empire Assistant V2 — AI orchestration EmpireModule for Viral Engine",
+  "main": "./index.ts",
+  "type": "module",
+  "dependencies": {
+    "@empire-os/core": "workspace:*"
+  }
+}

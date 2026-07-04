@@ -1,7 +1,7 @@
 {
   "name": "@empire-os/core",
   "version": "1.0.0",
-  "description": "Empire OS frozen core interfaces — Memory Bus, Module Gateway, AI Router, Event Bus, Workflow Engine, Plugin Registry",
+  "description": "Empire OS frozen core interfaces -- Memory Bus, Module Gateway, AI Router, Event Bus, Workflow Engine, Plugin Registry",
   "private": true,
   "type": "module",
   "exports": {
@@ -12,11 +12,10 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "build": "tsc --outDir dist"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
-    "vitest": "^1.6.0",
-    "@vitest/coverage-v8": "^1.6.0"
+    "vitest": "^1.6.0"
   }
 }

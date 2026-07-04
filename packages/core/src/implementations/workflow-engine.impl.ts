@@ -20,8 +20,8 @@ import type { EventBus } from '../interfaces/index.js'
 import { TOPICS } from '../interfaces/event-bus.js'
 
 export class InMemoryWorkflowEngine implements WorkflowEngine {
-  private _definitions = new Map<string, WorkflowDefinition>()
-  private _instances = new Map<string, WorkflowInstance>()
+  protected _definitions = new Map<string, WorkflowDefinition>()
+  protected _instances = new Map<string, WorkflowInstance>()
 
   constructor(
     private readonly gateway: ModuleGateway,
@@ -177,7 +177,8 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
       }
     }
 
-    // All steps complete
+    // All steps complete — guard against terminal status set by reject()/cancel() mid-flight
+    if (instance.status !== 'running') return
     instance.status = 'completed'
     instance.completedAt = new Date().toISOString()
     this._instances.set(instance.id, instance)

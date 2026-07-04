@@ -1,3 +1,10 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'packages/*'
+  - 'apps/*'
+  - 'apps/crosspost-enterprise/empire-module'
+  - 'apps/storyforge/empire-module'
+  - 'apps/video-pipeline/empire-module'
+allowBuilds:
+  '@google/genai': true
+  esbuild: true
+  protobufjs: true

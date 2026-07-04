@@ -167,7 +167,7 @@ describe('InMemoryWorkflowEngine', () => {
       await new Promise<void>((res) => setTimeout(res, 10))
 
       const stepDoneCalls = (eventBus.publish as ReturnType<typeof vi.fn>).mock.calls.filter(
-        ([event]) => event?.topic === 'workflow.step-done'
+        ([event]) => event?.topic === 'workflow.step.completed'
       )
       expect(stepDoneCalls).toHaveLength(3)
     })
@@ -364,12 +364,17 @@ describe('InMemoryWorkflowEngine', () => {
     })
 
     it('reject marks the instance as failed', async () => {
+      // Block the gateway so runInstance can never advance to 'completed'
+      // before reject() fires — eliminates the timing race entirely
+      ;(gateway.route as ReturnType<typeof vi.fn>).mockReturnValue(
+        new Promise<never>(() => {})
+      )
       await engine.define(makeLinearWorkflow(1))
       const instance = await engine.start('linear-wf-1', {})
-      await engine.pause(instance.id)
+      // runInstance is now stuck at gateway.route; it can never set 'completed'
 
+      await engine.pause(instance.id)
       await engine.reject(instance.id, 'step-1', 'reviewer-josh', 'Quality failed')
-      await new Promise<void>((res) => setTimeout(res, 10))
 
       const result = await engine.status(instance.id)
       expect(result.status).toBe('failed')

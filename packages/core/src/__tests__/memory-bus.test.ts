@@ -41,16 +41,22 @@ describe('InMemoryMemoryBus', () => {
     })
 
     it('updates an existing key (preserves createdAt)', async () => {
-      await bus.write('status', 'v1')
-      const first = await bus.read('status')
-      const createdAt = first!.createdAt
+      vi.useFakeTimers()
+      try {
+        await bus.write('status', 'v1')
+        const first = await bus.read('status')
+        const createdAt = first!.createdAt
 
-      await bus.write('status', 'v2')
-      const second = await bus.read('status')
+        vi.advanceTimersByTime(1) // ensure updatedAt timestamp differs by at least 1ms
+        await bus.write('status', 'v2')
+        const second = await bus.read('status')
 
-      expect(second!.value).toBe('v2')
-      expect(second!.createdAt).toBe(createdAt) // unchanged
-      expect(second!.updatedAt).not.toBe(createdAt) // bumped
+        expect(second!.value).toBe('v2')
+        expect(second!.createdAt).toBe(createdAt)     // unchanged
+        expect(second!.updatedAt).not.toBe(createdAt) // bumped
+      } finally {
+        vi.useRealTimers()
+      }
     })
 
     it('attaches tags and moduleId', async () => {

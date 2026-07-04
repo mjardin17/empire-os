@@ -1,22 +1,19 @@
 {
   "name": "empire-os",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "Empire OS — AI infrastructure for Viral Engine (Gods & Glory | Machine Learning | Little Olympus)",
   "private": true,
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "lint": "turbo lint",
-    "type-check": "turbo type-check",
-    "clean": "turbo clean"
+    "test": "pnpm --filter @empire-os/core test",
+    "test:watch": "pnpm --filter @empire-os/core test:watch",
+    "start": "pnpm --filter @empire-os/server start",
+    "build": "pnpm --filter @empire-os/core build"
   },
   "devDependencies": {
-    "turbo": "^1.13.0",
-    "@types/node": "^20.0.0",
     "typescript": "^5.4.0"
   },
-  "packageManager": "pnpm@9.0.0",
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ]
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
 }

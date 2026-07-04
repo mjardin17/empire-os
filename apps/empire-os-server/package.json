@@ -1,0 +1,21 @@
+{
+  "name": "@empire-os/server",
+  "version": "1.0.0",
+  "description": "Empire OS HTTP server — bootstraps all CoreServices and EmpireModules",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "build": "tsc --outDir dist --rootDir . && node dist/server.js"
+  },
+  "dependencies": {
+    "@empire-os/core": "workspace:*",
+    "@empire-os/empire-assistant": "workspace:*",
+    "dotenv": "^16.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.16.0",
+    "typescript": "^5.4.0",
+    "pm2": "^5.4.0"
+  }
+}

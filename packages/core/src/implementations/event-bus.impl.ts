@@ -19,8 +19,8 @@ const HISTORY_LIMIT = 1000  // per topic
 
 export class InProcessEventBus implements EventBus {
   private subscribers = new Map<string, Map<string, EventHandler>>()
-  private history = new Map<string, DomainEvent[]>()
-  private stats = {
+  private _history = new Map<string, DomainEvent[]>()
+  private _stats = {
     totalPublished: 0,
     totalDelivered: 0,
     pendingRetries: 0,
@@ -36,12 +36,12 @@ export class InProcessEventBus implements EventBus {
     }
 
     // Store in history
-    if (!this.history.has(full.topic)) this.history.set(full.topic, [])
-    const topicHistory = this.history.get(full.topic)!
+    if (!this._history.has(full.topic)) this._history.set(full.topic, [])
+    const topicHistory = this._history.get(full.topic)!
     topicHistory.push(full)
     if (topicHistory.length > HISTORY_LIMIT) topicHistory.shift()
 
-    this.stats.totalPublished++
+    this._stats.totalPublished++
 
     // Deliver to subscribers
     const topicSubs = this.subscribers.get(full.topic)
@@ -52,7 +52,7 @@ export class InProcessEventBus implements EventBus {
         })
       )
       await Promise.all(deliveries)
-      this.stats.totalDelivered += topicSubs.size
+      this._stats.totalDelivered += topicSubs.size
     }
 
     return full
@@ -72,7 +72,7 @@ export class InProcessEventBus implements EventBus {
 
     // Replay history if requested
     if (options?.fromBeginning) {
-      const history = this.history.get(topic) ?? []
+      const history = this._history.get(topic) ?? []
       Promise.resolve().then(async () => {
         for (const event of history) {
           await Promise.resolve(handler(event)).catch(console.error)
@@ -86,7 +86,7 @@ export class InProcessEventBus implements EventBus {
   }
 
   async history(topic: string, options?: HistoryOptions): Promise<DomainEvent[]> {
-    let events = this.history.get(topic) ?? []
+    let events = this._history.get(topic) ?? []
 
     if (options?.since) {
       const since = new Date(options.since).getTime()
@@ -106,7 +106,7 @@ export class InProcessEventBus implements EventBus {
 
   async stats(): Promise<EventBusStats> {
     const topicCounts: Record<string, number> = {}
-    for (const [topic, events] of this.history.entries()) {
+    for (const [topic, events] of this._history.entries()) {
       topicCounts[topic] = events.length
     }
 
@@ -116,7 +116,7 @@ export class InProcessEventBus implements EventBus {
     }
 
     return {
-      ...this.stats,
+      ...this._stats,
       activeSubscribers,
       topicCounts,
     }
@@ -124,7 +124,7 @@ export class InProcessEventBus implements EventBus {
 
   async replay(correlationId: string): Promise<DomainEvent[]> {
     const results: DomainEvent[] = []
-    for (const events of this.history.values()) {
+    for (const events of this._history.values()) {
       results.push(...events.filter(e => e.correlationId === correlationId))
     }
     return results.sort(

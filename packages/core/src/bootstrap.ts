@@ -11,15 +11,25 @@
 
 import { InMemoryPluginRegistry } from './implementations/plugin-registry.impl.js'
 import { InMemoryMemoryBus } from './implementations/memory-bus.impl.js'
+import { FileMemoryBus } from './implementations/file-memory-bus.impl.js'
 import { InProcessEventBus } from './implementations/event-bus.impl.js'
+import { FileEventBus } from './implementations/file-event-bus.impl.js'
 import { DefaultAIRouter } from './implementations/ai-router.impl.js'
 import { HttpModuleGateway } from './implementations/module-gateway.impl.js'
 import { InMemoryWorkflowEngine } from './implementations/workflow-engine.impl.js'
+import { FileWorkflowEngine } from './implementations/file-workflow-engine.impl.js'
 import type { CoreServices } from './interfaces/empire-module.js'
 
 export interface BootstrapOptions {
   /** Skip registering built-in workflow definitions (useful in tests) */
   skipBuiltinWorkflows?: boolean
+  /**
+   * Directory to store persistent data files.
+   * When set, FileMemoryBus / FileEventBus / FileWorkflowEngine are used instead of
+   * in-memory implementations. State survives server restarts.
+   * Example: '.empire-data'  (relative to CWD) or an absolute path.
+   */
+  dataDir?: string
 }
 
 let _services: CoreServices | null = null
@@ -28,12 +38,15 @@ export async function bootstrap(options: BootstrapOptions = {}): Promise<CoreSer
   if (_services) return _services  // singleton — call once
 
   // 1. Instantiate all 6 core services
+  //    File-backed implementations are used when dataDir is set (recommended for production).
   const pluginRegistry = new InMemoryPluginRegistry()
-  const memoryBus = new InMemoryMemoryBus()
-  const eventBus = new InProcessEventBus()
-  const aiRouter = new DefaultAIRouter()
+  const memoryBus     = options.dataDir ? new FileMemoryBus(options.dataDir)    : new InMemoryMemoryBus()
+  const eventBus      = options.dataDir ? new FileEventBus(options.dataDir)     : new InProcessEventBus()
+  const aiRouter      = new DefaultAIRouter()
   const moduleGateway = new HttpModuleGateway()
-  const workflowEngine = new InMemoryWorkflowEngine(moduleGateway, eventBus)
+  const workflowEngine = options.dataDir
+    ? new FileWorkflowEngine(moduleGateway, eventBus, options.dataDir)
+    : new InMemoryWorkflowEngine(moduleGateway, eventBus)
 
   _services = {
     pluginRegistry,

@@ -20,8 +20,8 @@ import type { EventBus } from '../interfaces/index.js'
 import { TOPICS } from '../interfaces/event-bus.js'
 
 export class InMemoryWorkflowEngine implements WorkflowEngine {
-  private definitions = new Map<string, WorkflowDefinition>()
-  private instances = new Map<string, WorkflowInstance>()
+  private _definitions = new Map<string, WorkflowDefinition>()
+  private _instances = new Map<string, WorkflowInstance>()
 
   constructor(
     private readonly gateway: ModuleGateway,
@@ -29,15 +29,15 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
   ) {}
 
   async define(workflow: WorkflowDefinition): Promise<void> {
-    this.definitions.set(workflow.id, workflow)
+    this._definitions.set(workflow.id, workflow)
   }
 
   async undefine(workflowId: string): Promise<void> {
-    this.definitions.delete(workflowId)
+    this._definitions.delete(workflowId)
   }
 
   async definitions(): Promise<WorkflowDefinition[]> {
-    return Array.from(this.definitions.values())
+    return Array.from(this._definitions.values())
   }
 
   async start(
@@ -45,7 +45,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
     input: unknown,
     options: StartOptions = {}
   ): Promise<WorkflowInstance> {
-    const definition = this.definitions.get(workflowId)
+    const definition = this._definitions.get(workflowId)
     if (!definition) throw new Error(`Workflow not found: ${workflowId}`)
 
     if (options.dryRun) {
@@ -60,7 +60,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
     }
 
     const instance = this.makeInstance(definition, input, options, 'running')
-    this.instances.set(instance.id, instance)
+    this._instances.set(instance.id, instance)
 
     await this.eventBus.publish({
       topic: TOPICS.WORKFLOW_STARTED,
@@ -100,7 +100,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
   }
 
   private async runInstance(instance: WorkflowInstance): Promise<void> {
-    const definition = this.definitions.get(instance.definitionId)!
+    const definition = this._definitions.get(instance.definitionId)!
     const stepMap = new Map(definition.steps.map(s => [s.id, s]))
 
     let currentStepId: string | undefined = instance.currentStepId
@@ -113,7 +113,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
       }
 
       instance.currentStepId = currentStepId
-      this.instances.set(instance.id, instance)
+      this._instances.set(instance.id, instance)
 
       const stepResult: WorkflowStepResult = {
         stepId: step.id,
@@ -180,7 +180,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
     // All steps complete
     instance.status = 'completed'
     instance.completedAt = new Date().toISOString()
-    this.instances.set(instance.id, instance)
+    this._instances.set(instance.id, instance)
 
     await this.eventBus.publish({
       topic: TOPICS.WORKFLOW_COMPLETED,
@@ -206,7 +206,7 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
     instance.status = 'failed'
     instance.error = error
     instance.completedAt = new Date().toISOString()
-    this.instances.set(instance.id, instance)
+    this._instances.set(instance.id, instance)
     await this.eventBus.publish({
       topic: TOPICS.WORKFLOW_FAILED,
       source: 'workflow-engine',
@@ -216,38 +216,38 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
   }
 
   async status(instanceId: string): Promise<WorkflowInstance> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     return instance
   }
 
   async cancel(instanceId: string, reason?: string): Promise<void> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     instance.status = 'cancelled'
     instance.error = reason
     instance.completedAt = new Date().toISOString()
-    this.instances.set(instanceId, instance)
+    this._instances.set(instanceId, instance)
   }
 
   async pause(instanceId: string): Promise<void> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     instance.status = 'paused'
-    this.instances.set(instanceId, instance)
+    this._instances.set(instanceId, instance)
   }
 
   async resume(instanceId: string, input?: unknown): Promise<void> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     instance.status = 'running'
     if (input) instance.variables['resumeInput'] = input
-    this.instances.set(instanceId, instance)
+    this._instances.set(instanceId, instance)
     this.runInstance(instance).catch(console.error)
   }
 
   async list(filter?: WorkflowFilter): Promise<WorkflowInstance[]> {
-    let results = Array.from(this.instances.values())
+    let results = Array.from(this._instances.values())
     if (!filter) return results
     if (filter.definitionId) results = results.filter(i => i.definitionId === filter.definitionId)
     if (filter.triggeredBy) results = results.filter(i => i.triggeredBy === filter.triggeredBy)
@@ -264,15 +264,15 @@ export class InMemoryWorkflowEngine implements WorkflowEngine {
   }
 
   async approve(instanceId: string, stepId: string, approverId: string): Promise<void> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     instance.variables[`approval_${stepId}`] = { approved: true, by: approverId, at: new Date().toISOString() }
-    this.instances.set(instanceId, instance)
+    this._instances.set(instanceId, instance)
     if (instance.status === 'paused') await this.resume(instanceId)
   }
 
   async reject(instanceId: string, stepId: string, approverId: string, reason: string): Promise<void> {
-    const instance = this.instances.get(instanceId)
+    const instance = this._instances.get(instanceId)
     if (!instance) throw new Error(`Instance not found: ${instanceId}`)
     await this.failInstance(instance, `Step ${stepId} rejected by ${approverId}: ${reason}`)
   }

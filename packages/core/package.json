@@ -1,0 +1,16 @@
+{
+  "name": "@empire-os/core",
+  "version": "1.0.0",
+  "description": "Empire OS frozen core interfaces — Memory Bus, Module Gateway, AI Router, Event Bus, Workflow Engine, Plugin Registry",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

@@ -145,3 +145,13 @@ def get_provider(name: str) -> AIProvider:
             f"Add new adapters by subclassing AIProvider and registering in _PROVIDERS."
         )
     return _PROVIDERS[name]()
+
+
+def _register_gemini() -> None:
+    # Deferred import avoids a circular import (gemini_provider imports
+    # AIProvider/CompletionResult/ProviderError from this module).
+    from core.ai.gemini_provider import GeminiProvider
+    _PROVIDERS["gemini"] = GeminiProvider
+
+
+_register_gemini()

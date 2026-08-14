@@ -42,3 +42,4 @@ data/
 # IDE
 .vscode/settings.json
 .idea/
+apps/empire-os-server/.empire-data/

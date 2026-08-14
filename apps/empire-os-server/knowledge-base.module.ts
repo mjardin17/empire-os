@@ -464,6 +464,3 @@ export class KnowledgeBaseModule implements EmpireModule {
 
   async shutdown(): Promise<void> { /* file-backed, no cleanup needed */ }
 }
-
-// Re-export helpers used by other modules
-function ensureDir(): void { fs.mkdirSync(KB_DIR, { recursive: true }) }

@@ -56,7 +56,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
         plotHoleFlags: 'analysis.plotHoleFlags',
       },
       onSuccess: 'create-characters',
-      onFailure: null,
       timeoutMs: 30_000,
     },
 
@@ -71,7 +70,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       inputMapping: { project_id: 'projectId' },
       outputMapping: { id: 'characterId' },
       onSuccess: 'build-world',
-      onFailure: null,
       timeoutMs: 15_000,
     },
 
@@ -86,7 +84,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       inputMapping: { project_id: 'projectId', name: 'worldName' },
       outputMapping: { id: 'worldId' },
       onSuccess: 'council-review',
-      onFailure: null,
       timeoutMs: 15_000,
     },
 
@@ -101,7 +98,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       inputMapping: { project_context: 'manuscriptText' },
       outputMapping: { feedback: 'councilFeedback' },
       onSuccess: 'generate-cover',
-      onFailure: null,
       timeoutMs: 120_000,
       retryPolicy: { maxAttempts: 2, backoffMs: 5_000 },
     },
@@ -136,7 +132,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       inputMapping: { author: 'author' },
       outputMapping: { path: 'epubPath' },
       onSuccess: 'automation-ready',
-      onFailure: null,
       timeoutMs: 60_000,
     },
 
@@ -151,7 +146,6 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       inputMapping: { book_metadata_id: 'bookMetadataId' },
       outputMapping: { status: 'automationStatus' },
       onSuccess: 'generate-formats',
-      onFailure: null,
       timeoutMs: 10_000,
     },
 
@@ -199,8 +193,7 @@ export const STORY_PIPELINE_WORKFLOW: WorkflowDefinition = {
       action: 'POST /publishing/approve',
       approvers: ['josh'],
       approvalTimeoutMs: 7 * 24 * 60 * 60 * 1000,  // 7 days
-      onSuccess: null,   // workflow complete
-      onFailure: null,
+      // no onSuccess — workflow complete
     },
 
   ],

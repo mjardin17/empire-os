@@ -6,7 +6,8 @@
  *
  * URL scheme:  http://localhost:PORT/:moduleId/path
  *   empire-assistant  → all AI + agent endpoints
- *   (future)          → crosspost, storyforge, video-pipeline
+ *   storyforge        → proxies to the StoryForge Python engine (port 8001)
+ *   (future)          → crosspost, video-pipeline
  *
  * Start:  npm start   (or: npx tsx server.ts)
  * Keys:   copy .env.example → .env  then add your API keys
@@ -35,6 +36,7 @@ import { EmpireInstallerModule } from './installer.module.js'
 import { DiscoveryEngineModule } from './discovery-engine.module.js'
 import { BenchmarkEngineModule } from './benchmark-engine.module.js'
 import { SelfImprovementModule } from './self-improvement.module.js'
+import { StoryForgeModule } from '../storyforge/empire-module/storyforge.module.js'
 import type { EmpireModule } from '@empire-os/core'
 import type { GatewayRequest, HttpMethod } from '@empire-os/core'
 
@@ -226,6 +228,16 @@ async function main(): Promise<void> {
   await selfImprovement.init(services, {})
   modules.set(selfImprovement.moduleId, selfImprovement)
   log(`Module ready: ${selfImprovement.moduleId} — http://${HOST}:${PORT}/self-improvement/`)
+
+  // StoryForge — proxies to the Python engine on its own process/port.
+  // Reads STORYFORGE_BASE_URL itself (defaults to http://localhost:8001);
+  // no port/baseUrl config needed here. Registers its own workflow +
+  // Higgsfield plugin inside onInit(). Runs `python main.py` / `uvicorn
+  // main:app --port 8001` separately in apps/storyforge/storyforge-engine/.
+  const storyforge = new StoryForgeModule()
+  await storyforge.init(services, {})
+  modules.set(storyforge.moduleId, storyforge)
+  log(`Module ready: ${storyforge.moduleId} — ${process.env.STORYFORGE_BASE_URL ?? 'http://localhost:8001'}`)
 
   // Future modules — add here:
   // const crosspost = new CrossPostModule()

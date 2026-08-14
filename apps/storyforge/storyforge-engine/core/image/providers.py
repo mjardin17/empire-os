@@ -473,6 +473,16 @@ _IMAGE_PROVIDERS = {
 }
 
 
+def _register_video_pipeline() -> None:
+    # Deferred import avoids a circular import (video_pipeline_provider
+    # imports ImageProvider/GenerationResult from this module/models).
+    from core.image.video_pipeline_provider import VideoPipelineImageProvider
+    _IMAGE_PROVIDERS["video_pipeline"] = VideoPipelineImageProvider
+
+
+_register_video_pipeline()
+
+
 def get_image_provider(name: str) -> ImageProvider:
     if name not in _IMAGE_PROVIDERS:
         raise ProviderError(

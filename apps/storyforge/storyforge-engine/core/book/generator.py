@@ -27,6 +27,7 @@ from core.ai.provider import get_provider
 from core.book.exporter import BookManifest, Chapter
 from core.book.formula_config import BookConfig, CustomizationLayer, get_book_config
 from core.book.patterson_formula import PattersonFormula
+from core.image.image_studio import ImageStudio
 
 
 class BookGenerationError(RuntimeError):
@@ -149,15 +150,25 @@ def generate_book(
     model: str = "gemini-2.0-flash",
     author: str = "Empire OS Publishing",
     cover_image_path: Optional[str] = None,
+    project_id: Optional[str] = None,
+    image_studio: Optional[ImageStudio] = None,
+    image_provider: str = "video_pipeline",
     max_retries_per_chapter: int = 3,
     chapter_sleep_sec: float = 1.0,
 ) -> BookGenerationResult:
     """Full Patterson-formula book generation: outline -> validated
-    chapters -> BookManifest ready for EpubExporter.export().
+    chapters -> optional cover -> BookManifest ready for
+    EpubExporter.export().
 
-    `cover_image_path` is a plain passthrough here — core/image's
-    video_pipeline provider generates the actual cover and calls this
-    with the resulting path (see main.py's /book/generate route).
+    Cover generation is opt-in: pass an `image_studio` (the app's
+    singleton — this function doesn't create its own, to avoid a second
+    divergent SQLite file) and this calls it with `image_provider`
+    (defaults to "video_pipeline" — see core/image/video_pipeline_provider.py).
+    If image_studio is None, or the provider isn't configured
+    (e.g. VIDEO_PIPELINE_PATH unset), the book is still generated —
+    cover_image_path just stays whatever was passed in (None by
+    default), same as before this existed. A cover failure never
+    fails the whole book.
 
     A chapter that still fails formula validation after every retry is
     still included (a flagged book beats no book) but shows up in
@@ -186,6 +197,11 @@ def generate_book(
         if i < len(outline["chapters"]):
             time.sleep(chapter_sleep_sec)
 
+    if cover_image_path is None and image_studio is not None:
+        cover_image_path = _generate_cover(
+            image_studio, project_id or title, title, outline, book_type, image_provider,
+        )
+
     manifest = BookManifest(
         title=title,
         author=author,
@@ -193,3 +209,35 @@ def generate_book(
         cover_image_path=cover_image_path,
     )
     return BookGenerationResult(manifest=manifest, chapter_warnings=warnings)
+
+
+def _generate_cover(
+    image_studio: ImageStudio,
+    project_id: str,
+    title: str,
+    outline: dict[str, Any],
+    book_type: str,
+    image_provider: str,
+) -> Optional[str]:
+    """Best-effort cover generation — never raises out of generate_book().
+    A missing/broken cover shouldn't take down an otherwise-good book."""
+    prompt = (
+        f"Book cover illustration for \"{title}\". "
+        f"Genre/style: {book_type.replace('_', ' ')}. "
+        f"{outline.get('description', '')[:200]}"
+    )
+    try:
+        asset = image_studio.generate_image(
+            project_id=project_id,
+            image_type="book_cover",
+            prompt=prompt,
+            provider=image_provider,
+            width=1600,
+            height=2560,
+        )
+        return asset.output_path if asset.status == "completed" else None
+    except Exception:
+        # ImageStudioError / ProviderError / provider-not-configured all
+        # land here — cover art is a nice-to-have, not a hard dependency
+        # for the book itself to exist.
+        return None

@@ -15,8 +15,15 @@ from pydantic import BaseModel
 
 from core.book.generator import BookGenerationError, generate_book
 from core.ai.provider import ProviderError
+from core.image.image_studio import ImageStudio
 
 book_router = APIRouter(prefix="/book", tags=["book-generation"])
+
+# Same db_path/output_dir as main.py's _image_studio singleton -- a
+# second ImageStudio instance pointed at the same SQLite file, not a
+# separate store. Keeps this router decoupled from main.py's globals
+# without needing a dependency-injection layer for one shared object.
+_image_studio = ImageStudio(db_path="storyforge_images.db", output_dir="generated_images")
 
 
 class GenerateBookRequest(BaseModel):
@@ -26,6 +33,9 @@ class GenerateBookRequest(BaseModel):
     provider: str = "gemini"
     model: str = "gemini-2.0-flash"
     author: str = "Empire OS Publishing"
+    project_id: Optional[str] = None
+    generate_cover: bool = True
+    image_provider: str = "video_pipeline"
 
 
 class ChapterWarningResponse(BaseModel):
@@ -41,6 +51,7 @@ class GenerateBookResponse(BaseModel):
     chapter_titles: List[str]
     chapter_warnings: List[ChapterWarningResponse]
     formula_clean: bool
+    cover_image_path: Optional[str] = None
 
 
 @book_router.post("/generate", response_model=GenerateBookResponse)
@@ -60,6 +71,9 @@ def generate_book_endpoint(req: GenerateBookRequest):
             provider_name=req.provider,
             model=req.model,
             author=req.author,
+            project_id=req.project_id,
+            image_studio=_image_studio if req.generate_cover else None,
+            image_provider=req.image_provider,
         )
     except (BookGenerationError, ProviderError, ValueError) as e:
         raise HTTPException(status_code=422, detail=str(e))
@@ -74,4 +88,5 @@ def generate_book_endpoint(req: GenerateBookRequest):
             for w in result.chapter_warnings
         ],
         formula_clean=len(result.chapter_warnings) == 0,
+        cover_image_path=result.manifest.cover_image_path,
     )

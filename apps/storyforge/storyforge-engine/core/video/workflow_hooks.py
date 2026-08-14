@@ -19,11 +19,23 @@ handler here.
 
 from __future__ import annotations
 
+import os
+import sys
+from pathlib import Path
 from typing import Any, Dict
 
 from core.video.video_studio import VideoStudio
 
 _video_studio = VideoStudio(db_path="storyforge_videos.db", output_dir="generated_videos")
+
+# YouTube is deliberately never in this default list. Standing rule
+# (this workspace's CLAUDE.md): YouTube uploads always require manual
+# approval, never automatic -- video-bot-pipeline's own
+# social_clips/auto_publisher.py already respects this itself
+# (publish_youtube_short() stages a .bat for Josh to run rather than
+# posting), but this handler doesn't rely on that downstream safety
+# net -- it just never queues youtube_shorts in the first place.
+_DEFAULT_DISTRIBUTION_PLATFORMS = ["instagram", "tiktok", "facebook"]
 
 
 def _handle_video_real(config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
@@ -55,6 +67,46 @@ def _handle_video_real(config: Dict[str, Any], context: Dict[str, Any]) -> Dict[
     }
 
 
+def _video_pipeline_path() -> str | None:
+    raw = os.environ.get("VIDEO_PIPELINE_PATH", "")
+    if not raw or not Path(raw).exists():
+        return None
+    return raw
+
+
+def _handle_distribute_social(config: Dict[str, Any], context: Dict[str, Any]) -> Dict[str, Any]:
+    """Queues the trailer for cross-platform posting via
+    video-bot-pipeline's existing crosspost_bridge.py -- reuses that
+    proven queue/publish infrastructure rather than building a second
+    one here. Instagram posting is real there; TikTok/Facebook are
+    still stubs in that pipeline as of this writing (queued safely,
+    just won't actually post yet) -- that's video-bot-pipeline's status
+    to fix, not something this handler papers over or duplicates."""
+    video_path = context.get("video_output_path")
+    if not video_path or not Path(video_path).exists():
+        return {"status": "skipped", "message": "no video_output_path in context — run the video step first"}
+
+    path = _video_pipeline_path()
+    if path is None:
+        return {"status": "skipped", "message": "VIDEO_PIPELINE_PATH not configured"}
+    if path not in sys.path:
+        sys.path.insert(0, path)
+
+    try:
+        from lib.crosspost_bridge import queue_commercial_for_posting
+    except ImportError as e:
+        return {"status": "error", "message": f"could not import crosspost_bridge: {e}"}
+
+    metadata = context.get("book_metadata")
+    title = getattr(metadata, "title", "") or config.get("title", "Untitled")
+    book_id = getattr(metadata, "id", "") or config.get("book_id", "")
+    platforms = config.get("platforms", _DEFAULT_DISTRIBUTION_PLATFORMS)
+
+    ok = queue_commercial_for_posting(video_path, title, book_id, platforms=platforms)
+    return {"status": "queued" if ok else "error", "platforms": platforms, "video_path": video_path}
+
+
 def register() -> None:
     from core.automation.workflow import register_step_handler
     register_step_handler("video", _handle_video_real)
+    register_step_handler("distribute_social", _handle_distribute_social)

@@ -75,6 +75,7 @@ class EpubExporter:
         now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         output_path = str(Path(output_path).with_suffix(".epub"))
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
         with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as zf:
             # 1. mimetype MUST be first entry and MUST be stored uncompressed

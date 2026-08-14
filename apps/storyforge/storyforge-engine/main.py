@@ -66,6 +66,7 @@ from core.book.router import book_router
 # -- Book trailer video generation (additive router) --------------------
 from core.video.router import video_router
 import core.video.workflow_hooks as _video_workflow_hooks
+import core.book.workflow_hooks as _book_workflow_hooks
 
 app = FastAPI(title="StoryForge Engine")
 app.include_router(empire_router)
@@ -111,6 +112,48 @@ _scheduler = Scheduler(event_bus=_automation_studio.events)
 # Forward every AutomationStudio event to Empire OS (fire-and-forget;
 # no-ops safely if EMPIRE_OS_EVENT_URL isn't set/reachable).
 setup_event_bridge(_automation_studio)
+
+# "chapters"/"epub_export"/"submit_platform_packages" -- new step types,
+# nothing to override (workflow.py never had a book-generation concept).
+_book_workflow_hooks.register()
+
+# The single end-to-end pipeline: chapters -> epub -> prepare KDP/D2D/
+# Payhip packages -> actually submit them -> trailer video -> queue for
+# social distribution. Saved once at startup under a fixed id so it's
+# immediately runnable via POST /automation/workflows/{id}/run without
+# the caller having to construct this graph themselves first.
+_STORYFORGE_PIPELINE_ID = "storyforge-book-pipeline"
+if _automation_studio.get_workflow(_STORYFORGE_PIPELINE_ID) is None:
+    _pipeline_now = time.time()
+    _automation_studio.save_workflow(WorkflowDefinition(
+        id=_STORYFORGE_PIPELINE_ID,
+        name="StoryForge: Patterson book -> covers -> trailer -> publish -> distribute",
+        start_step_id="chapters",
+        created_at=_pipeline_now,
+        updated_at=_pipeline_now,
+        steps=[
+            WorkflowStepDef(id="chapters", type="chapters", name="Generate + validate chapters",
+                             on_success="epub_export"),
+            WorkflowStepDef(id="epub_export", type="epub_export", name="Export EPUB",
+                             on_success="kdp"),
+            WorkflowStepDef(id="kdp", type="kdp", name="Prepare KDP listing", on_success="d2d"),
+            WorkflowStepDef(id="d2d", type="d2d", name="Prepare Draft2Digital listing", on_success="payhip"),
+            WorkflowStepDef(id="payhip", type="payhip", name="Prepare Payhip listing",
+                             on_success="submit_packages"),
+            WorkflowStepDef(id="submit_packages", type="submit_platform_packages",
+                             name="Submit to KDP/D2D/Payhip", on_success="video"),
+            # on_failure=on_success: a missing/broken trailer shouldn't
+            # fail a run that already wrote and submitted the book --
+            # same "best-effort, never take down the core result"
+            # philosophy as Phase 4's cover generation. The distribute
+            # step already handles a missing video_output_path
+            # gracefully (returns skipped, not an exception).
+            WorkflowStepDef(id="video", type="video", name="Generate trailer",
+                             on_success="distribute", on_failure="distribute"),
+            WorkflowStepDef(id="distribute", type="distribute_social",
+                             name="Queue for Instagram/TikTok/Facebook (never YouTube — manual approval only)"),
+        ],
+    ))
 
 
 # =======================================================================

@@ -63,9 +63,14 @@ from empire_hooks.memory_sync import make_sync
 # -- Patterson-formula book generation (additive router) ---------------
 from core.book.router import book_router
 
+# -- Book trailer video generation (additive router) --------------------
+from core.video.router import video_router
+import core.video.workflow_hooks as _video_workflow_hooks
+
 app = FastAPI(title="StoryForge Engine")
 app.include_router(empire_router)
 app.include_router(book_router)
+app.include_router(video_router)
 
 # --- Original route, unchanged ---------------------------------------
 
@@ -90,6 +95,9 @@ _publishing_studio = PublishingStudio(db_path="storyforge_publishing.db", output
 register_connector("kdp", KDPConnector())
 register_connector("d2d", D2DConnector())
 register_connector("payhip", PayhipConnector())
+
+# Real "video" workflow step (was a manual_or_provider_required stub).
+_video_workflow_hooks.register()
 
 # Phase 5: Empire Automation Studio singletons.
 _automation_studio = AutomationStudio(db_path="storyforge_automation.db")

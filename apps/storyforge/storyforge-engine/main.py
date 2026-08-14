@@ -31,7 +31,10 @@ from core.publishing.research import analyze_listings
 from core.publishing.design_brief import DesignBriefGenerator
 from core.publishing.optimizer import BookOptimizer, BookOptimizerError
 from core.publishing.marketing import MarketingGenerator, MarketingGeneratorError
-from core.publishing.platform_export import PlatformExportError
+from core.publishing.platform_export import PlatformExportError, publish_package, register_connector
+from core.publishing.connectors.kdp_connector import KDPConnector
+from core.publishing.connectors.d2d_connector import D2DConnector
+from core.publishing.connectors.payhip_connector import PayhipConnector
 from core.publishing.studio import PublishingStudio, PublishingStudioError
 from dataclasses import asdict as _dataclass_asdict
 
@@ -80,6 +83,13 @@ _world_engine = WorldEngine(db_path="storyforge_world.db", memory_sync=make_sync
 _continuity_validator = ContinuityValidator(_world_engine)
 _image_studio = ImageStudio(db_path="storyforge_images.db", output_dir="generated_images")
 _publishing_studio = PublishingStudio(db_path="storyforge_publishing.db", output_root="publishing_exports")
+
+# Real direct-publish connectors (KDP/D2D/Payhip). Each is_configured()
+# gracefully reports false if the relevant credentials aren't set - no
+# credentials are set here, Josh adds real ones to .env himself.
+register_connector("kdp", KDPConnector())
+register_connector("d2d", D2DConnector())
+register_connector("payhip", PayhipConnector())
 
 # Phase 5: Empire Automation Studio singletons.
 _automation_studio = AutomationStudio(db_path="storyforge_automation.db")
@@ -896,6 +906,27 @@ def export_platform_package(req: ExportPlatformPackageRequest):
         raise HTTPException(status_code=400, detail=str(e))
     _publishing_studio.save_platform_package(package)
     return _dataclass_asdict(package)
+
+
+class SubmitPlatformPackageRequest(BaseModel):
+    credentials: Optional[Dict[str, str]] = None
+
+
+@app.post("/publishing/platform-packages/{package_id}/submit")
+def submit_platform_package(package_id: str, req: SubmitPlatformPackageRequest):
+    """The call site that PublishingConnector/register_connector/
+    get_connector never had: builds a PlatformPackage's listing, but
+    prior to this nothing ever invoked connector.submit() on it. This
+    does — real KDP/D2D/Payhip connectors are registered at startup
+    (or NullConnector's honest manual-review response for anything
+    else), and the resulting status is persisted."""
+    package = _publishing_studio.get_platform_package(package_id)
+    if not package:
+        raise HTTPException(status_code=404, detail="platform package not found")
+
+    result = publish_package(package, req.credentials)
+    _publishing_studio.update_platform_package(package)
+    return {**result, "package": _dataclass_asdict(package)}
 
 
 @app.get("/publishing/projects/{project_id}/platform-packages")

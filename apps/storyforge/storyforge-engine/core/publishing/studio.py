@@ -184,6 +184,17 @@ class PublishingStudio:
         self._conn.commit()
         return package.id
 
+    def update_platform_package(self, package: PlatformPackage) -> None:
+        """Persist a status change (e.g. after publish_package() submits
+        it) to an already-saved package. save_platform_package() is
+        insert-only (id is the primary key) so a second save would
+        raise a UNIQUE constraint error -- this is the update path."""
+        self._conn.execute(
+            "UPDATE pub_platform_packages SET payload = ?, updated_at = ? WHERE id = ?",
+            (json.dumps(asdict(package)), package.updated_at, package.id),
+        )
+        self._conn.commit()
+
     def get_platform_package(self, package_id: str) -> Optional[PlatformPackage]:
         row = self._conn.execute("SELECT payload FROM pub_platform_packages WHERE id = ?", (package_id,)).fetchone()
         return PlatformPackage(**json.loads(row["payload"])) if row else None

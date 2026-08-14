@@ -53,6 +53,10 @@ PLATFORM_CONSTRAINTS: Dict[str, Dict[str, Any]] = {
     "gumroad": {"max_title_chars": 100},
     "payhip": {"max_title_chars": 100},
     "woocommerce": {"max_title_chars": 200},
+    # Draft2Digital distributes one EPUB to B&N/Apple/Kobo/Scribd/Tolino/
+    # Vivlio/BorrowBox in one call -- these are D2D's own limits, the
+    # widest of that group's, since D2D itself validates per-retailer.
+    "d2d": {"max_keywords": 7, "max_title_chars": 200},
 }
 
 
@@ -98,6 +102,9 @@ def _shape_listing_fields(platform: str, metadata: BookMetadata) -> Dict[str, An
     if platform == "kdp":
         return {**base, "subtitle": metadata.subtitle, "keywords": metadata.keywords[:7],
                 "categories": metadata.categories[:10], "a_plus_content": metadata.a_plus_content}
+    if platform == "d2d":
+        return {**base, "subtitle": metadata.subtitle, "keywords": metadata.keywords[:7],
+                "language": "en"}
     if platform == "etsy":
         return {**base, "tags": metadata.keywords[:13], "category_path": metadata.categories[:1]}
     if platform == "shopify":
@@ -212,3 +219,29 @@ class PlatformExporter:
             created_at=now,
             updated_at=now,
         )
+
+
+def publish_package(package: PlatformPackage, credentials: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    """The call site that was missing: get_connector()/register_connector()
+    were fully built but nothing ever called connector.submit(). This is
+    that call. Mutates package.status in place based on the result so
+    the caller can persist it (see main.py's POST
+    /publishing/platform-packages/{id}/submit)."""
+    connector = get_connector(package.platform)
+    result = connector.submit(package, credentials)
+
+    status = result.get("status", "")
+    if status == "manual_review_required":
+        package.status = "ready"
+    elif status in ("success", "published", "submitted"):
+        package.status = "published"
+    elif status == "skipped":
+        # Connector declined to attempt (missing credentials/asset) --
+        # distinct from a real submission failure, same honesty split
+        # NullConnector already draws for "no connector at all".
+        package.status = "not_configured"
+    else:
+        package.status = "failed"
+    package.updated_at = time.time()
+
+    return {**result, "connector": connector.name, "package_status": package.status}

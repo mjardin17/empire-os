@@ -25,7 +25,7 @@ BOOK_CATEGORIES = {
 }
 
 # Selling platforms with a known export packaging preset.
-SELLING_PLATFORMS = {"kdp", "etsy", "shopify", "gumroad", "payhip", "woocommerce"}
+SELLING_PLATFORMS = {"kdp", "etsy", "shopify", "gumroad", "payhip", "woocommerce", "d2d"}
 
 # Marketing asset channels this module knows how to generate copy for.
 MARKETING_CHANNELS = {

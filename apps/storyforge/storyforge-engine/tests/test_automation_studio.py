@@ -33,6 +33,7 @@ from core.automation.providers import MarketingProvider, ProviderError, Publishi
 from core.automation.scheduler import Scheduler, register_job_handler
 from core.automation.studio import AutomationStudio
 from core.automation.workflow import WorkflowEngine, list_step_types
+from core.video.providers import VideoGenerationResult, VideoProvider, register_video_provider
 
 
 class FakePublishingProvider(PublishingProvider):
@@ -62,6 +63,20 @@ class BoomPublishingProvider(PublishingProvider):
 
     def publish(self, metadata, platform, source_assets=None):
         raise ProviderError("simulated marketplace outage")
+
+
+class FakeVideoProvider(VideoProvider):
+    """Offline stand-in for VideoPipelineVideoProvider (Phase 5) — the
+    real one needs VIDEO_PIPELINE_PATH + a working video-bot-pipeline
+    checkout, neither available in this offline test suite."""
+    name = "fake"
+
+    def generate(self, title, description, output_dir, cover_image_path=None,
+                 author="", size="1080x1920", extra=None):
+        return VideoGenerationResult(output_path="fake_trailer.mp4", provider=self.name, size=size)
+
+
+register_video_provider("fake", FakeVideoProvider)
 
 
 @pytest.fixture()
@@ -293,7 +308,14 @@ def test_workflow_story_to_video_to_publish_to_marketing(studio, metadata):
         WorkflowStepDef(id="s1", type="story", on_success="s2"),
         WorkflowStepDef(id="s2", type="images", on_success="s3"),
         WorkflowStepDef(id="s3", type="voice", on_success="s4"),
-        WorkflowStepDef(id="s4", type="video", on_success="s5"),
+        # config={"provider": "fake"}: harmless no-op if this test runs
+        # in isolation (the "video" step type is still the original
+        # manual_or_provider_required stub, which ignores config) —
+        # but matters when the full suite runs and some other test's
+        # import of main.py has already registered the real handler
+        # (Phase 5), which would otherwise try the real, offline-
+        # unavailable video_pipeline provider and fail this step.
+        WorkflowStepDef(id="s4", type="video", config={"provider": "fake"}, on_success="s5"),
         WorkflowStepDef(id="s5", type="publish", config={"platforms": ["kdp"]}, on_success="s6"),
         WorkflowStepDef(id="s6", type="marketing", on_success=None),
     ]

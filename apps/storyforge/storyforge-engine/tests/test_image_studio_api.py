@@ -29,7 +29,13 @@ def test_root_route_unchanged(client):
 
 
 def test_phase1_and_world_engine_routes_still_present():
-    route_paths = {route.path for route in main.app.routes}
+    # Newer Starlette wraps app.include_router()'d routers as an
+    # _IncludedRouter entry rather than immediately flattening them into
+    # plain APIRoute objects — those entries have no .path of their own
+    # (their paths live one level down, on their nested .routes). None
+    # of the bare @app.get/post routes checked below are affected either
+    # way; skip non-APIRoute entries rather than crashing on them.
+    route_paths = {route.path for route in main.app.routes if hasattr(route, "path")}
     for expected in (
         "/science/analyze",
         "/characters",

@@ -143,6 +143,13 @@ _VIDEO_PROVIDERS: Dict[str, type] = {
 }
 
 
+def register_video_provider(name: str, provider_cls: type) -> None:
+    """Add or override a video provider. Same extensibility pattern as
+    core/ai/provider.py and core/image/providers.py — mainly useful for
+    tests to register a fake/offline provider without touching this file."""
+    _VIDEO_PROVIDERS[name] = provider_cls
+
+
 def get_video_provider(name: str) -> VideoProvider:
     if name not in _VIDEO_PROVIDERS:
         raise ProviderError(

@@ -27,7 +27,7 @@ FORMAT_TYPES = {
 # exact set Phase 4's PlatformExporter already knows how to package for
 # (kdp/etsy/shopify/gumroad/payhip/woocommerce) -- Phase 5 orchestrates
 # Phase 4, it does not reimplement it.
-CAMPAIGN_PLATFORMS = {"kdp", "etsy", "shopify", "gumroad", "payhip", "woocommerce"}
+CAMPAIGN_PLATFORMS = {"kdp", "etsy", "shopify", "gumroad", "payhip", "woocommerce", "d2d"}
 
 # Marketing surfaces Phase 5 knows how to generate content/schedule for.
 # "instagram_post" / "pinterest_pin" / "tiktok_video_script" /

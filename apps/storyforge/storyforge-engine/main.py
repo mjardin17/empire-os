@@ -57,8 +57,12 @@ from core.automation.workflow import WorkflowEngine, WorkflowError, list_step_ty
 from empire_hooks.router import empire_router, setup_event_bridge
 from empire_hooks.memory_sync import make_sync
 
+# -- Patterson-formula book generation (additive router) ---------------
+from core.book.router import book_router
+
 app = FastAPI(title="StoryForge Engine")
 app.include_router(empire_router)
+app.include_router(book_router)
 
 # --- Original route, unchanged ---------------------------------------
 

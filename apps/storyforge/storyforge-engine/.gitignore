@@ -1,0 +1,16 @@
+# Runtime-generated SQLite databases (created on first request per singleton)
+*.db
+*.db-journal
+
+# Local environment (real credentials go here, never commit)
+.env
+
+# Generated output
+generated_images/
+publishing_exports/
+automation_formats/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/

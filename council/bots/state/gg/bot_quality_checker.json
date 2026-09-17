@@ -1,0 +1,81 @@
+{
+  "quality_issues": [
+    {
+      "episode": "GG_EP001",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP002",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP003",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP004",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP005",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP006",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP007",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP008",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP009",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP010",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP011",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_EP012",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "GG_TRAILER",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "LO_OPENER",
+      "issue": "too_short",
+      "value": 0.0
+    },
+    {
+      "episode": "ML_EP001",
+      "issue": "too_short",
+      "value": 0.0
+    }
+  ],
+  "finals_checked": 15,
+  "last_updated": "2026-07-11T20:34:08.186764"
+}

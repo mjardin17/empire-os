@@ -13,9 +13,16 @@
  * Keys:   copy .env.example → .env  then add your API keys
  */
 
-import 'dotenv/config'
+import dotenv from 'dotenv'
 import http from 'node:http'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { dirname } from 'node:path'
+
+// Load .env from project root
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') })
 import { bootstrap } from '@empire-os/core/bootstrap'
 import type { ConfigurableAIRouter } from '@empire-os/core'
 import { EmpireAssistantModule } from '../empire-assistant/empire-assistant.module.js'
@@ -23,6 +30,7 @@ import { AnthropicAdapter } from './adapters/anthropic.adapter.js'
 import { GeminiAdapter } from './adapters/gemini.adapter.js'
 import { OpenAIAdapter } from './adapters/openai.adapter.js'
 import { OllamaAdapter } from './adapters/ollama.adapter.js'
+import { InceptionAdapter } from './adapters/inception.adapter.js'
 import { GooseExecutor } from './goose.executor.js'
 import { ModelManagerModule } from './model-manager.module.js'
 import { DiscoveryModule } from './discovery.module.js'
@@ -143,7 +151,16 @@ async function main(): Promise<void> {
     log('   OPENAI_API_KEY not set — OpenAI models skipped (optional)')
   }
 
-  // ── 5. Goose (local dev agent — file ops, shell, coding execution) ────────
+  // ── 5. Inception Labs (cost-optimized tasks: summary, copy, classification) ──
+  if (process.env.INCEPTION_API_KEY) {
+    aiRouter.registerAdapter(new InceptionAdapter(process.env.INCEPTION_API_KEY))
+    log('Inception adapter registered (mercury-2.5)')
+    log('   Role: cost-optimized summary, copy, classification')
+  } else {
+    log('   INCEPTION_API_KEY not set — Inception models skipped (optional)')
+  }
+
+  // ── 6. Goose (local dev agent — file ops, shell, coding execution) ────────
   const goose = await GooseExecutor.create()
   if (goose.available) {
     const gooseVersion = await goose.version()
@@ -155,7 +172,7 @@ async function main(): Promise<void> {
     log('   Install: https://github.com/block/goose')
   }
 
-  const hasAnyAI = process.env.ANTHROPIC_API_KEY || process.env.GOOGLE_API_KEY || process.env.OPENAI_API_KEY
+  const hasAnyAI = process.env.ANTHROPIC_API_KEY || process.env.GOOGLE_API_KEY || process.env.OPENAI_API_KEY || process.env.INCEPTION_API_KEY
   if (!hasAnyAI) {
     log('⚠  No cloud AI keys configured. Ollama will handle all requests (or add keys to .env).')
   }

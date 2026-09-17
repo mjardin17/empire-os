@@ -1,0 +1,34 @@
+{
+  "GG_GRAND_OPENING_SHORT": {
+    "episode_id": "GG_GRAND_OPENING_SHORT",
+    "title": "Gods & Glory \u2014 Grand Opening Short",
+    "current_scenes": 4,
+    "current_duration_sec": 60,
+    "first_seen": "2026-07-11T15:57:46.435050",
+    "status": "needs_expansion"
+  },
+  "GG_GRAND_OPENING_TRAILER": {
+    "episode_id": "GG_GRAND_OPENING_TRAILER",
+    "title": "Gods & Glory \u2014 Grand Opening Trailer",
+    "current_scenes": 8,
+    "current_duration_sec": 150,
+    "first_seen": "2026-07-11T15:57:46.435111",
+    "status": "needs_expansion"
+  },
+  "GG_PROMO001": {
+    "episode_id": "GG_PROMO001",
+    "title": "Gods & Glory \u2014 Channel Trailer",
+    "current_scenes": 3,
+    "current_duration_sec": 55,
+    "first_seen": "2026-07-11T15:57:46.435122",
+    "status": "needs_expansion"
+  },
+  "GG_TRAILER": {
+    "episode_id": "GG_TRAILER",
+    "title": "Gods & Glory \u2014 Channel Trailer",
+    "current_scenes": 6,
+    "current_duration_sec": 73,
+    "first_seen": "2026-07-11T15:57:46.435128",
+    "status": "needs_expansion"
+  }
+}

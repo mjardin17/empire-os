@@ -1,0 +1,168 @@
+{
+  "run_id": "20260711_155747",
+  "channel": "lo",
+  "ran_at": "2026-07-11T15:57:48.063331",
+  "overall_status": "warning",
+  "total_issues_found": 41,
+  "total_issues_fixed": 0,
+  "bots": [
+    {
+      "bot_name": "bot_guardian",
+      "ran_at": "2026-07-11T15:57:47.840304",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Little Olympus \u2014 nothing to scan"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_script_guard",
+      "ran_at": "2026-07-11T15:57:47.847324",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 Scan complete: 1 full scripts, 38 stubs found"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_image_healer",
+      "ran_at": "2026-07-11T15:57:47.941669",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Little Olympus \u2014 nothing to heal"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_render_queue",
+      "ran_at": "2026-07-11T15:57:47.948982",
+      "status": "warning",
+      "issues_found": 1,
+      "issues_fixed": 0,
+      "messages": [
+        "\u26a0 LO_EP001: QUEUED for render \u2014 Little Zeus Gets His Thunderbolt",
+        "\u2713 0 rendered, 0 in queue, 1 newly queued",
+        "\u2713 Render queue: 1 episode(s) waiting",
+        "\u2713   \u2192 LO_EP001: Little Zeus Gets His Thunderbolt"
+      ],
+      "next_action": "py auto_render.py --episode LO_EP001 --channel lo"
+    },
+    {
+      "bot_name": "bot_stub_expander",
+      "ran_at": "2026-07-11T15:57:47.998302",
+      "status": "warning",
+      "issues_found": 38,
+      "issues_fixed": 0,
+      "messages": [
+        "\u26a0 LO_EP002: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP003: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP004: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP005: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP006: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP007: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP008: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP009: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP010: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP011: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP012: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP013: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP014: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP015: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP016: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP017: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP018: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP019: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP020: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP021: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP022: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP023: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP024: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP025: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP026: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP027: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP028: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP029: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP030: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP033: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP034: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP035: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP036: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP037: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP038: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP039: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_EP040: stub only (7 scenes, 63s) \u2014 added to backlog",
+        "\u26a0 LO_OPENER: stub only (5 scenes, 40s) \u2014 added to backlog",
+        "\u2713 Expansion backlog: 38 episode(s) need full scripts",
+        "\u2713   LO: 37 stubs (LO_EP002, LO_EP003, LO_EP004, LO_EP005\u2026)",
+        "\u2713   LO_OPENER: 1 stubs (LO_OPENER)"
+      ],
+      "next_action": "Write full 24-scene scripts for backlog episodes or run: py council/bot_factory.py --expand EPISODE_ID"
+    },
+    {
+      "bot_name": "bot_clip_rebuilder",
+      "ran_at": "2026-07-11T15:57:48.038428",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Little Olympus \u2014 nothing to rebuild"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_final_assembler",
+      "ran_at": "2026-07-11T15:57:48.050110",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Little Olympus \u2014 nothing to assemble"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "unnamed_bot",
+      "ran_at": "2026-07-11T15:57:48.054171",
+      "status": "error",
+      "issues_found": 1,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2717 Bot crashed: BotResult.__init__() got an unexpected keyword argument 'bot'"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_quality_checker",
+      "ran_at": "2026-07-11T15:57:48.054909",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No renders dir yet for Little Olympus \u2014 nothing to check"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_auto_renderer",
+      "ran_at": "2026-07-11T15:57:48.055660",
+      "status": "error",
+      "issues_found": 1,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 Starting render: LO_EP001 \u2014 Little Zeus Gets His Thunderbolt",
+        "\u2717 Bot crashed: _save_queue() missing 1 required positional argument: 'queue_path'"
+      ],
+      "next_action": null
+    }
+  ],
+  "next_actions": [
+    "py auto_render.py --episode LO_EP001 --channel lo",
+    "Write full 24-scene scripts for backlog episodes or run: py council/bot_factory.py --expand EPISODE_ID"
+  ]
+}

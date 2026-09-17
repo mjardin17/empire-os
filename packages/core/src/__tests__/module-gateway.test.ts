@@ -17,6 +17,8 @@ function makeDescriptor(
   return {
     id,
     name: `Module ${id}`,
+    version: '1.0.0',
+    description: 'Test module',
     baseUrl: `http://localhost:300${id.charCodeAt(0) % 10}`,
     healthPath: '/empire/health',
     capabilities: ['default-cap'],
@@ -227,8 +229,7 @@ describe('HttpModuleGateway', () => {
 
     it('throws when neither moduleId nor capability is provided', async () => {
       await expect(
-        // @ts-expect-error intentionally invalid
-        gateway.route({ path: '/', method: 'GET' })
+        gateway.route({ path: '/', method: 'GET' } as any)
       ).rejects.toThrow('GatewayRequest requires moduleId or capability')
     })
 

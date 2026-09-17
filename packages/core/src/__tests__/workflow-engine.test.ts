@@ -48,6 +48,8 @@ function makeEventBusMock(): EventBus {
 function makeLinearWorkflow(stepCount: number): WorkflowDefinition {
   const steps = Array.from({ length: stepCount }, (_, i) => ({
     id: `step-${i + 1}`,
+    type: 'action' as const,
+    name: `Step ${i + 1}`,
     action: 'do-thing',
     moduleId: 'test-module',
     onSuccess: i < stepCount - 1 ? `step-${i + 2}` : undefined,
@@ -57,9 +59,9 @@ function makeLinearWorkflow(stepCount: number): WorkflowDefinition {
     id: `linear-wf-${stepCount}`,
     name: `Linear ${stepCount}-step Workflow`,
     version: '1',
+    description: `Linear workflow with ${stepCount} steps`,
     initialStep: 'step-1',
     steps,
-    timeout: 60000,
   }
 }
 
@@ -192,16 +194,21 @@ describe('InMemoryWorkflowEngine', () => {
         id: 'failing-wf',
         name: 'Failing Workflow',
         version: '1',
+        description: 'Workflow that tests failure handling',
         initialStep: 'step-primary',
         steps: [
           {
             id: 'step-primary',
+            type: 'action',
+            name: 'Primary Step',
             action: 'do-primary',
             moduleId: 'test-module',
             onFailure: 'step-recovery',
           },
           {
             id: 'step-recovery',
+            type: 'action',
+            name: 'Recovery Step',
             action: 'do-recovery',
             moduleId: 'test-module',
           },
@@ -232,8 +239,9 @@ describe('InMemoryWorkflowEngine', () => {
         id: 'no-handler-wf',
         name: 'No Handler',
         version: '1',
+        description: 'Workflow with no error handler',
         initialStep: 'step-1',
-        steps: [{ id: 'step-1', action: 'will-fail', moduleId: 'test-module' }],
+        steps: [{ id: 'step-1', type: 'action', name: 'Step 1', action: 'will-fail', moduleId: 'test-module' }],
       }
 
       await failEngine.define(wf)

@@ -1,0 +1,121 @@
+{
+  "run_id": "20260711_155748",
+  "channel": "ed",
+  "ran_at": "2026-07-11T15:57:48.120584",
+  "overall_status": "error",
+  "total_issues_found": 1,
+  "total_issues_fixed": 0,
+  "bots": [
+    {
+      "bot_name": "bot_guardian",
+      "ran_at": "2026-07-11T15:57:48.088672",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Empire Decoded \u2014 nothing to scan"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_script_guard",
+      "ran_at": "2026-07-11T15:57:48.089255",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 Scan complete: 0 full scripts, 0 stubs found"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_image_healer",
+      "ran_at": "2026-07-11T15:57:48.096938",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Empire Decoded \u2014 nothing to heal"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_render_queue",
+      "ran_at": "2026-07-11T15:57:48.098234",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 0 rendered, 0 in queue, 0 newly queued"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_stub_expander",
+      "ran_at": "2026-07-11T15:57:48.103059",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No prompts dir yet for Empire Decoded \u2014 nothing to scan"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_clip_rebuilder",
+      "ran_at": "2026-07-11T15:57:48.104129",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Empire Decoded \u2014 nothing to rebuild"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_final_assembler",
+      "ran_at": "2026-07-11T15:57:48.110838",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No output dir yet for Empire Decoded \u2014 nothing to assemble"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "unnamed_bot",
+      "ran_at": "2026-07-11T15:57:48.118945",
+      "status": "error",
+      "issues_found": 1,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2717 Bot crashed: BotResult.__init__() got an unexpected keyword argument 'bot'"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_quality_checker",
+      "ran_at": "2026-07-11T15:57:48.119424",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 No renders dir yet for Empire Decoded \u2014 nothing to check"
+      ],
+      "next_action": null
+    },
+    {
+      "bot_name": "bot_auto_renderer",
+      "ran_at": "2026-07-11T15:57:48.119797",
+      "status": "ok",
+      "issues_found": 0,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2713 Render queue is empty \u2014 nothing to do"
+      ],
+      "next_action": null
+    }
+  ],
+  "next_actions": []
+}

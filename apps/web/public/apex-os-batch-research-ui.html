@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>APEX OS — Batch & Multi-Channel Research</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      background: rgba(15, 23, 42, 0.8);
+      border-bottom: 2px solid #10b981;
+      padding: 20px 0;
+      margin-bottom: 30px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 5px;
+      color: #10b981;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #334155;
+    }
+
+    .tab-button {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .tab-button.active {
+      color: #10b981;
+      border-bottom-color: #10b981;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .panel {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid #475569;
+      border-radius: 4px;
+      color: #e2e8f0;
+      font-family: inherit;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #10b981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #10b981;
+      color: #0f172a;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+
+    button:disabled {
+      background: #64748b;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #1e40af;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .status-badge.completed {
+      background: #10b981;
+    }
+
+    .status-badge.failed {
+      background: #ef4444;
+    }
+
+    .status-badge.processing {
+      background: #f59e0b;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .stat-card {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #10b981;
+      margin-top: 5px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      margin-top: 5px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #059669);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .queue-item {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .queue-item .priority {
+      background: #1e40af;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 3px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .queue-item .views {
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .error {
+      color: #ef4444;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .success {
+      color: #10b981;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .topic-input-group {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 12px;
+      margin-bottom: 10px;
+    }
+
+    .topic-row {
+      display: grid;
+      grid-template-columns: 1fr 150px 100px 50px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .topic-row button {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .connection-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #94a3b8;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ef4444;
+    }
+
+    .status-dot.connected {
+      background: #10b981;
+    }
+
+    .info-box {
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 3px solid #10b981;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>🎬 APEX OS — Batch & Multi-Channel Research</h1>
+      <p class="subtitle">Generate 36+ videos in parallel with intelligent routing and performance optimization</p>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Connection Status -->
+    <div class="panel">
+      <div class="connection-status">
+        <span class="status-dot connected"></span>
+        <span>Connected to APEX Server</span>
+        <span id="serverStatus">(checking...)</span>
+      </div>
+      <input type="text" id="apiEndpoint" placeholder="API Endpoint (default: http://localhost:3001)" style="margin-top: 10px; font-size: 12px;">
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab('single')">Single Research</button>
+      <button class="tab-button" onclick="switchTab('batch')">Batch (36 Videos)</button>
+      <button class="tab-button" onclick="switchTab('multichannel')">Multi-Channel</button>
+      <button class="tab-button" onclick="switchTab('queue')">Render Queue</button>
+    </div>
+
+    <!-- TAB 1: Single Research -->
+    <div id="single" class="tab-content active">
+      <div class="panel">
+        <h2>Single Topic Research</h2>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Start Council research for one topic</p>
+
+        <div class="form-group">
+          <label>Topic</label>
+          <input type="text" id="singleTopic" placeholder="e.g., The Fall of Darius the Great">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+          <div class="form-group">
+            <label>Channel</label>
+            <select id="singleChannel">
+              <option value="gg">Gods & Glory (Adults)</option>
+              <option value="il">Iron Legends (Tweens/Young Adults)</option>
+              <option value="lo">Little Olympus (Kids)</option>
+              <option value="ed">Empire Decoded (Educational)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Duration (minutes)</label>
+            <input type="number" id="singleDuration" value="45" min="15" max="120">
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button onclick="startSingleResearch()">▶ Start Research</button>
+          <button onclick="checkSingleStatus()" id="statusButton" disabled>Check Status</button>
+        </div>
+
+        <div id="singleOutput" style="margin-top: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 2: Batch Research -->
+    <div id="batch" class="tab-content">
+      <div class="panel">
+        <h2>Batch Research — 36 Videos</h2>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Process up to 36 topics in parallel with intelligent channel routing</p>
+
+        <div class="info-box">
+          📊 Batch orchestrator runs 6 concurrent jobs, processes 36 topics in ~10 minutes, auto-optimizes render queue by predicted performance
+        </div>
+
+        <div id="topicsList"></div>
+
+        <div class="button-group">
+          <button onclick="addTopicRow()">+ Add Topic</button>
+          <button onclick="startBatchResearch()" id="batchStartButton">▶ Start Batch Research</button>
+          <button onclick="clearTopics()">Clear All</button>
+        </div>
+
+        <div id="batchStatus" style="margin-top: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 3: Multi-Channel Coordination -->
+    <div id="multichannel" class="tab-content">
+      <div class="panel">
+        <h2>Multi-Channel Coordination</h2>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Transform 1 topic into 3-4 channel-specific narratives</p>
+
+        <div class="info-box">
+          🎭 Same topic, different angles: "Fall of Darius" → GG (epic military), IL (warrior conflict), LO (hero journey), ED (history lesson)
+        </div>
+
+        <textarea id="multiChannelTopics" placeholder="Enter topics (one per line)&#10;e.g.,&#10;Fall of Darius&#10;Rise of Rome&#10;Hannibal's Campaign" style="height: 120px;"></textarea>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px;">
+          <label style="display: flex; align-items: center; gap: 5px; font-weight: 400;">
+            <input type="checkbox" value="gg" checked> Gods & Glory
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-weight: 400;">
+            <input type="checkbox" value="il" checked> Iron Legends
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-weight: 400;">
+            <input type="checkbox" value="lo" checked> Little Olympus
+          </label>
+          <label style="display: flex; align-items: center; gap: 5px; font-weight: 400;">
+            <input type="checkbox" value="ed"> Empire Decoded
+          </label>
+        </div>
+
+        <div class="button-group" style="margin-top: 20px;">
+          <button onclick="coordinateMultiChannel()">▶ Coordinate Topics</button>
+        </div>
+
+        <div id="multiChannelOutput" style="margin-top: 20px;"></div>
+      </div>
+    </div>
+
+    <!-- TAB 4: Render Queue -->
+    <div id="queue" class="tab-content">
+      <div class="panel">
+        <h2>Render Queue Optimization</h2>
+        <p style="font-size: 13px; color: #94a3b8; margin-bottom: 15px;">Videos sorted by predicted performance (highest ROI first)</p>
+
+        <div class="grid">
+          <div class="stat-card">
+            <div class="stat-label">Queue Size</div>
+            <div class="stat-value" id="queueSize">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Est. Views</div>
+            <div class="stat-value" id="totalViews">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Render Time (hrs)</div>
+            <div class="stat-value" id="renderHours">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Optimization Gain</div>
+            <div class="stat-value" id="optimizationGain">0%</div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 25px; margin-bottom: 15px;">Top Performers (Render Priority)</h3>
+        <div id="queueItems"></div>
+
+        <div class="button-group" style="margin-top: 20px;">
+          <button onclick="refreshQueue()">🔄 Refresh Queue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_ENDPOINT = 'http://localhost:3001';
+    let currentBatchId = null;
+    let topicRows = [];
+
+    // Tab switching
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+      document.getElementById(tab).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    // Single Research
+    async function startSingleResearch() {
+      const topic = document.getElementById('singleTopic').value;
+      const channel = document.getElementById('singleChannel').value;
+      const duration = document.getElementById('singleDuration').value;
+
+      if (!topic) {
+        alert('Enter a topic');
+        return;
+      }
+
+      const output = document.getElementById('singleOutput');
+      output.innerHTML = '<p class="success">Starting research...</p>';
+
+      try {
+        const response = await fetch(`${API_ENDPOINT}/apex/generate-research`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `research_${Date.now()}`,
+            topic,
+            channel,
+            targetDuration: parseInt(duration),
+            episodeNum: 1,
+            channelType: 'documentary',
+            targetAudience: 'general',
+          }),
+        });
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+
+        document.getElementById('statusButton').disabled = false;
+        output.innerHTML = `
+          <p class="success">✓ Research started</p>
+          <p>Job ID: <code>${data.jobId}</code></p>
+          <p>Status: ${data.status}</p>
+        `;
+      } catch (err) {
+        output.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      }
+    }
+
+    async function checkSingleStatus() {
+      // Implementation would poll /research-status endpoint
+      alert('Status check not yet implemented in this UI');
+    }
+
+    // Batch Research
+    function addTopicRow() {
+      const list = document.getElementById('topicsList');
+      const rowId = `topic_${Date.now()}`;
+
+      const row = document.createElement('div');
+      row.id = rowId;
+      row.className = 'topic-input-group';
+      row.innerHTML = `
+        <div class="topic-row">
+          <input type="text" placeholder="Topic" class="topic-input">
+          <select class="topic-channel">
+            <option value="">Auto</option>
+            <option value="gg">Gods & Glory</option>
+            <option value="il">Iron Legends</option>
+            <option value="lo">Little Olympus</option>
+            <option value="ed">Decoded</option>
+          </select>
+          <input type="number" placeholder="Priority" min="1" max="10" value="5" class="topic-priority" style="max-width: 80px;">
+          <button onclick="removeTopicRow('${rowId}')" style="background: #ef4444; padding: 6px 10px; font-size: 12px;">✕</button>
+        </div>
+      `;
+
+      list.appendChild(row);
+    }
+
+    function removeTopicRow(rowId) {
+      document.getElementById(rowId).remove();
+    }
+
+    function clearTopics() {
+      document.getElementById('topicsList').innerHTML = '';
+    }
+
+    async function startBatchResearch() {
+      const rows = document.querySelectorAll('.topic-input-group');
+      const topics = [];
+
+      rows.forEach(row => {
+        const topic = row.querySelector('.topic-input').value;
+        const channel = row.querySelector('.topic-channel').value;
+        const priority = parseInt(row.querySelector('.topic-priority').value);
+
+        if (topic) {
+          topics.push({
+            id: `topic_${Date.now()}_${Math.random()}`,
+            topic,
+            primaryChannel: channel || undefined,
+            priority,
+          });
+        }
+      });
+
+      if (topics.length === 0) {
+        alert('Add at least one topic');
+        return;
+      }
+
+      const status = document.getElementById('batchStatus');
+      status.innerHTML = '<p class="success">Starting batch...</p>';
+
+      try {
+        const response = await fetch(`${API_ENDPOINT}/batch-research`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `batch_${Date.now()}`,
+            topics,
+            maxConcurrentJobs: 6,
+            includePredictions: true,
+          }),
+        });
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+
+        currentBatchId = data.batchId;
+        status.innerHTML = `
+          <p class="success">✓ Batch started</p>
+          <p>Batch ID: <code>${data.batchId}</code></p>
+          <p>${data.message}</p>
+          <p style="color: #94a3b8; font-size: 12px;">Estimated time: ${data.estimatedTime}</p>
+        `;
+      } catch (err) {
+        status.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      }
+    }
+
+    // Multi-Channel
+    async function coordinateMultiChannel() {
+      const topicsText = document.getElementById('multiChannelTopics').value;
+      const topics = topicsText.split('\n').map(t => t.trim()).filter(t => t);
+
+      if (topics.length === 0) {
+        alert('Enter at least one topic');
+        return;
+      }
+
+      const channels = [];
+      document.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+        channels.push(cb.value);
+      });
+
+      const output = document.getElementById('multiChannelOutput');
+      output.innerHTML = '<p class="success">Coordinating topics...</p>';
+
+      try {
+        const response = await fetch(`${API_ENDPOINT}/multi-channel-coordinate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: `mc_${Date.now()}`,
+            topics,
+            channelsPerTopic: channels,
+          }),
+        });
+
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+
+        let html = `
+          <p class="success">✓ Coordination complete</p>
+          <p>${data.message}</p>
+          <div class="grid">
+            <div class="stat-card"><div class="stat-label">Base Topics</div><div class="stat-value">${data.baseTopics}</div></div>
+            <div class="stat-card"><div class="stat-label">Total Videos</div><div class="stat-value">${data.totalVideos}</div></div>
+            <div class="stat-card"><div class="stat-label">Est. Views</div><div class="stat-value">${(data.estimatedTotalViews / 1000).toFixed(0)}K</div></div>
+          </div>
+        `;
+
+        data.batches.forEach(batch => {
+          html += `<h4 style="margin-top: 15px;">${batch.topic}</h4>`;
+          batch.narratives.forEach(n => {
+            html += `<p style="font-size: 12px; margin: 5px 0;"><span style="background: #1e40af; padding: 2px 6px; border-radius: 3px;">${n.channel}</span> ${n.adaptedTitle} <span style="color: #94a3b8;">(${n.tone})</span></p>`;
+          });
+        });
+
+        output.innerHTML = html;
+      } catch (err) {
+        output.innerHTML = `<p class="error">Error: ${err.message}</p>`;
+      }
+    }
+
+    // Queue
+    async function refreshQueue() {
+      if (!currentBatchId) {
+        alert('Start a batch first');
+        return;
+      }
+
+      // Implementation would fetch queue data
+      alert('Queue refresh not yet implemented');
+    }
+
+    // Initialize
+    addTopicRow();
+    addTopicRow();
+    addTopicRow();
+
+    // Check server health
+    fetch(`${API_ENDPOINT}/apex/health`)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('serverStatus').textContent = `(${data.videoJobs || 0} active jobs)`;
+      })
+      .catch(err => {
+        document.querySelector('.status-dot').classList.remove('connected');
+        document.getElementById('serverStatus').textContent = '(offline)';
+      });
+  </script>
+</body>
+</html>

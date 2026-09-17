@@ -1,5 +1,5 @@
-/**
- * Unit tests — InMemoryMemoryBus
+﻿/**
+ * Unit tests â€” InMemoryMemoryBus
  * Covers: read, write, delete, search, subscribe, clear, TTL
  */
 
@@ -13,7 +13,7 @@ describe('InMemoryMemoryBus', () => {
     bus = new InMemoryMemoryBus()
   })
 
-  // ── write / read ──────────────────────────────────────────────────────────
+  // â”€â”€ write / read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('write() + read()', () => {
     it('stores and retrieves a value', async () => {
@@ -29,15 +29,15 @@ describe('InMemoryMemoryBus', () => {
       expect(result).toBeNull()
     })
 
-    it('scopes keys — same key in different scopes are independent', async () => {
+    it('scopes keys â€” same key in different scopes are independent', async () => {
       await bus.write('config', 'global-val', { scope: 'global' })
-      await bus.write('config', 'local-val', { scope: 'local', moduleId: 'storyforge' })
+      await bus.write('config', 'module-val', { scope: 'module', moduleId: 'storyforge' })
 
       const g = await bus.read('config', 'global')
-      const l = await bus.read('config', 'local')
+      const m = await bus.read('config', 'module')
 
       expect(g!.value).toBe('global-val')
-      expect(l!.value).toBe('local-val')
+      expect(m!.value).toBe('module-val')
     })
 
     it('updates an existing key (preserves createdAt)', async () => {
@@ -70,7 +70,7 @@ describe('InMemoryMemoryBus', () => {
     })
   })
 
-  // ── TTL ───────────────────────────────────────────────────────────────────
+  // â”€â”€ TTL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('TTL expiry', () => {
     it('returns null after ttlSeconds elapses', async () => {
@@ -86,7 +86,7 @@ describe('InMemoryMemoryBus', () => {
     })
   })
 
-  // ── delete ────────────────────────────────────────────────────────────────
+  // â”€â”€ delete â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('delete()', () => {
     it('removes an existing entry', async () => {
@@ -100,7 +100,7 @@ describe('InMemoryMemoryBus', () => {
     })
   })
 
-  // ── search ────────────────────────────────────────────────────────────────
+  // â”€â”€ search â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('search()', () => {
     beforeEach(async () => {
@@ -125,7 +125,7 @@ describe('InMemoryMemoryBus', () => {
       expect(results.length).toBe(2)
     })
 
-    it('filters by tags — all tags must match', async () => {
+    it('filters by tags â€” all tags must match', async () => {
       const results = await bus.search({ tags: ['render'] })
       expect(results.length).toBe(2)
 
@@ -142,7 +142,7 @@ describe('InMemoryMemoryBus', () => {
     })
   })
 
-  // ── subscribe ────────────────────────────────────────────────────────────
+  // â”€â”€ subscribe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('subscribe()', () => {
     it('fires handler on write matching pattern', async () => {
@@ -178,26 +178,27 @@ describe('InMemoryMemoryBus', () => {
     })
   })
 
-  // ── clear ─────────────────────────────────────────────────────────────────
+  // â”€â”€ clear â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   describe('clear()', () => {
     it('removes all entries matching scope', async () => {
-      await bus.write('a', 1, { scope: 'local', moduleId: 'mod-a' })
-      await bus.write('b', 2, { scope: 'local', moduleId: 'mod-b' })
+      await bus.write('a', 1, { scope: 'module', moduleId: 'mod-a' })
+      await bus.write('b', 2, { scope: 'module', moduleId: 'mod-b' })
       await bus.write('c', 3, { scope: 'global' })
 
-      const count = await bus.clear('local')
+      const count = await bus.clear('module')
       expect(count).toBe(2)
       expect(await bus.read('c', 'global')).not.toBeNull()
     })
 
     it('scopes clear by moduleId when provided', async () => {
-      await bus.write('x', 1, { scope: 'local', moduleId: 'mod-a' })
-      await bus.write('y', 2, { scope: 'local', moduleId: 'mod-b' })
+      await bus.write('x', 1, { scope: 'module', moduleId: 'mod-a' })
+      await bus.write('y', 2, { scope: 'module', moduleId: 'mod-b' })
 
-      const count = await bus.clear('local', 'mod-a')
+      const count = await bus.clear('module', 'mod-a')
       expect(count).toBe(1)
-      expect(await bus.read('y', 'local')).not.toBeNull()
+      expect(await bus.read('y', 'module')).not.toBeNull()
     })
   })
 })
+

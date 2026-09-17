@@ -1,0 +1,169 @@
+You are a principal frontend engineer. Build "Boss Listers AI", a high-performance, single-screen multi-channel cross-listing dashboard and automated inventory management app for resellers.
+
+Implement the system using React, Vite, Tailwind CSS, and Lucide Icons, organized into modular components. The application must look professional, modern, and high-contrast, utilizing a clean "Cosmic Slate" dark/light mode dashboard interface with ample spacing and smooth animations.
+
+---
+
+### 1. Core Features & Architecture
+
+1. **Dashboard Interface**:
+   - **Header**: Navigation tabs for [📦 Inventory], [✨ Listing Stager], [🛡️ Boss Shield™ Guard], [⚙️ API Connections].
+   - **Main Panel**: Renders the selected view smoothly with active states and intuitive, tactile controls.
+
+2. **Sales Channels (8 Platforms)**:
+   Integrate 8 major resale channels throughout the system with the following fee rules:
+   - **eBay**: 13.25% fee + $0.30 fixed.
+   - **Poshmark**: Flat $2.95 fee for items under $15, or 20% platform commission for items $15 and over.
+   - **Mercari**: 10% selling fee + 2.9% + $0.50 processing.
+   - **Depop**: 10% selling fee + 3.3% + $0.45 processing.
+   - **Grailed**: 9% selling fee + 3.49% + $0.49 processing.
+   - **Etsy**: 6.5% transaction + 3% + $0.25 processing.
+   - **Shopify**: 2.9% + $0.30 gateway processing.
+   - **TikTok Shop**: 8% flat seller fee + $0.30 payment processing.
+
+3. **Active Inventory Manager**:
+   - Display items in a responsive grid or table showing Thumbnail, Title, Brand, Cost, Suggested Price, Creation Date, and Active Listed Channels (with status pills: "Listed", "Delisted", "In Progress").
+   - Support search filters, channel-filtering, and an action drawer to trigger quick edits or rapid delisting.
+
+4. **Simultaneous Multi-Post & Listing Stager**:
+   - Provide a workspace containing a mock AI-generated Title, SEO optimization panel, and price customization inputs for each platform.
+   - **Single-Channel Staging**: Fine-tune titles and price settings with real-time profit breakouts.
+   - **Simultaneous Multi-Post**: Select multiple channels via checkbox toggles and broadcast the listing simultaneously. Show immediate simulated handshakes (loading animations, sync logs, success URL generations).
+   - Require active API authorization (from the settings tab) before allowing a channel to be listed. Show an alert with an inline connect trigger if unauthorized.
+
+5. **Boss Shield™ Autonomous Cybernetic Guard Core**:
+   - When an item is marked "Sold" on one platform, simulate the automatic delisting protocol across all other platforms.
+   - Present a simulated command console stream showing real-time background lockups, API requests, and success handshakes to prevent double-sales.
+
+6. **Camera Scanner Tab**:
+   - Include a simulation of an AI-powered visual camera scanner. Users upload or trigger a scan to automatically extract Brand, Model, Condition, Suggested Price, and auto-populate the listing fields.
+
+---
+
+### 2. File Blueprint and TypeScript Structures
+
+#### `/src/types.ts`
+```typescript
+export type PlatformName = "ebay" | "poshmark" | "mercari" | "depop" | "grailed" | "etsy" | "shopify" | "tiktok";
+
+export type ProductCondition =
+  | "New With Tags (NWT)"
+  | "New Without Tags (NWOT)"
+  | "Like New / Excellent Used Condition (EUC)"
+  | "Good Used Condition (GUC)"
+  | "Fair Condition";
+
+export interface SyncRecord {
+  listed: boolean;
+  listedPrice?: number;
+  listedUrl?: string;
+  syncedAt?: string;
+  syncStatus: "idle" | "loading" | "success" | "error";
+  syncLog?: string;
+}
+
+export interface ResellerProduct {
+  id: string;
+  title: string;
+  brand: string;
+  size: string;
+  condition: ProductCondition;
+  buyCost: number;
+  suggestedPrice: number;
+  sku: string;
+  upc?: string;
+  imageUrl: string;
+  description: string;
+  platforms: Record<PlatformName, SyncRecord>;
+  createdAt: string;
+}
+```
+
+#### `/src/data.ts`
+```typescript
+import { ResellerProduct, PlatformName } from "./types";
+
+export function calculateProductProfit(price: number, buyCost: number, platform: PlatformName) {
+  let platformFee = 0;
+
+  if (platform === "ebay") {
+    platformFee = price * 0.1325 + 0.30;
+  } else if (platform === "poshmark") {
+    platformFee = price < 15 ? 2.95 : price * 0.20;
+  } else if (platform === "mercari") {
+    platformFee = price * 0.10 + (price * 0.029 + 0.50);
+  } else if (platform === "depop") {
+    platformFee = price * 0.10 + (price * 0.033 + 0.45);
+  } else if (platform === "grailed") {
+    platformFee = price * 0.09 + (price * 0.0349 + 0.49);
+  } else if (platform === "etsy") {
+    platformFee = price * 0.065 + (price * 0.03 + 0.25);
+  } else if (platform === "shopify") {
+    platformFee = price * 0.029 + 0.30;
+  } else if (platform === "tiktok") {
+    platformFee = price * 0.08 + 0.30;
+  }
+
+  const roundedFee = Math.round(platformFee * 100) / 100;
+  const netProfit = price - buyCost - roundedFee;
+  const marginPercent = price > 0 ? Math.round((netProfit / price) * 100) : 0;
+
+  return {
+    platformFee: roundedFee,
+    netProfit: Math.round(netProfit * 100) / 100,
+    marginPercent
+  };
+}
+```
+
+---
+
+### 3. Styling Guidelines
+
+- **Main Canvas**: Minimalist layout featuring soft off-white/charcoal cards, rounded corner elements (rounded-xl / rounded-2xl), and thin custom borders (border-slate-150).
+- **Platform Theme Accents**:
+  - eBay: Blue/Red hover states.
+  - Poshmark: Maroon custom elements.
+  - TikTok Shop: High-contrast Teal styling (bg-teal-600, border-teal-200, custom processing indicators).
+- **Responsive Wrappers**: All tabular data and multi-channel rows must render flawlessly on small viewports via overflow-x-auto structures.
+
+---
+
+### 4. Component File Structure
+
+Build these components:
+- `App.tsx` — root shell, tab routing, dark/light mode toggle
+- `InventoryManager.tsx` — product grid/table with search, filter, action drawer
+- `ListingStager.tsx` — multi-platform listing workspace with profit calculator
+- `ListingPreview.tsx` — per-platform price input, fee breakdown, sync simulation
+- `ShieldEngine.tsx` — Boss Shield™ command console with auto-delist stream
+- `ApiConnections.tsx` — platform auth status, connect/disconnect toggles
+- `CameraScanner.tsx` — AI scan simulation, field auto-population
+- `/src/types.ts` — all TypeScript interfaces (see above)
+- `/src/data.ts` — fee calculation engine + mock product data (see above)
+
+---
+
+### 5. Mock Data
+
+Seed the inventory with 5-8 realistic reseller products (streetwear, sneakers, vintage items) with realistic prices, brands, conditions, and platform sync states showing a mix of Listed/Delisted/In Progress statuses across channels. This mock data is a **fallback only** — see Section 6, real inventory comes from Supabase.
+
+---
+
+### 6. Live Inventory Backend (Supabase — REQUIRED, not simulated)
+
+This app shares one Supabase project/table with a separate eBay sync service and the public website storefront (see `inventory-sync/` in the main repo). `src/lib/supabaseClient.ts` and `src/lib/inventoryApi.ts` are already written — **use them as-is, do not regenerate them.** Upload them as context files alongside `types.ts` and `data.ts`.
+
+Requirements:
+- Add `@supabase/supabase-js` to `package.json` dependencies.
+- Add `.env.example` (already provided) to the project and read `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` via `import.meta.env` — never hardcode them.
+- `InventoryManager.tsx` must load real inventory via `listProducts()` on mount, and call `subscribeToProducts(callback)` in a `useEffect` to live-refresh when eBay sync pushes changes (unsubscribe on unmount). Fall back to the Section 5 mock data only if `listProducts()` throws (e.g. `.env` not configured yet) — show a small banner in that case: "Not connected to Supabase — showing demo data."
+- New items created in the Listing Stager write through `upsertManualProduct()`. They save with `source: "manual"` and are safe to edit freely.
+- Items with `product.source === "ebay"` (populated by the external sync, not this app) should render their eBay platform card as **read-only** — price/quantity fields disabled with a tooltip: "Managed by the eBay sync — edit the listing on eBay directly." Editing them here has no effect since the next 15-minute sync overwrites it.
+- Writes require a signed-in Supabase Auth user whose `app_metadata.role` is `"boss_lister"` (enforced server-side by Postgres RLS — reads work without auth). `ApiConnections.tsx` should surface auth state (signed in / signed out) and block write actions with a clear message when signed out, rather than letting the Supabase call fail silently.
+
+---
+
+### Delivery
+
+Output the complete, production-ready code for every file listed above. Each file should be complete — no placeholders, no TODOs. The app must run with `npm install && npm run dev` with zero errors.

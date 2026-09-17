@@ -1,0 +1,29 @@
+{
+  "run_id": "20260813_064745",
+  "channel": "gg",
+  "ran_at": "2026-08-13T06:48:07.929285",
+  "overall_status": "error",
+  "total_issues_found": 8,
+  "total_issues_fixed": 0,
+  "bots": [
+    {
+      "bot_name": "bot_19_wiring_inspector",
+      "ran_at": "2026-08-13T06:47:45.158037",
+      "status": "error",
+      "issues_found": 8,
+      "issues_fixed": 0,
+      "messages": [
+        "\u26a0 mission 'lo_ep001_render' (render) still in_progress after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'upload_lo_ep001' (upload) still pending after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'upload_gg_ep001' (upload) still pending after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-test-workflow-001' (commercial) still pending after 90h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786296459' (commercial) still pending after 89h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786374118' (commercial) still pending after 68h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786374732' (commercial) still pending after 68h \u2014 its consumer is not running or is failing silently",
+        "\u2717 4 commercial render(s) prepared but produced NO MP4 \u2014 the render step is failing silently: .temp_commercial_commercial-restored-1786296459.json, .temp_commercial_commercial-restored-1786374118.json, .temp_commercial_commercial-restored-1786374732.json, .temp_commercial_commercial-test-workflow-001.json"
+      ],
+      "next_action": null
+    }
+  ],
+  "next_actions": []
+}

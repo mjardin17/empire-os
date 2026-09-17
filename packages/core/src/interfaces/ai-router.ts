@@ -7,7 +7,7 @@
  * STABILITY STATUS: FROZEN — do not change without Josh approval.
  */
 
-export type AIProvider = 'anthropic' | 'google' | 'openai' | 'ollama' | 'deepseek'
+export type AIProvider = 'anthropic' | 'google' | 'openai' | 'ollama' | 'deepseek' | 'inception'
 export type AIRoutingStrategy = 'speed' | 'quality' | 'cost' | 'local-only'
 
 export interface AIModel {

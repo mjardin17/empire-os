@@ -1,0 +1,306 @@
+{
+  "LO_EP002": {
+    "episode_id": "LO_EP002",
+    "title": "Baby Hercules and the Giant Snake",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022280",
+    "status": "needs_expansion"
+  },
+  "LO_EP003": {
+    "episode_id": "LO_EP003",
+    "title": "Perseus and the Tiny Medusa",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022304",
+    "status": "needs_expansion"
+  },
+  "LO_EP004": {
+    "episode_id": "LO_EP004",
+    "title": "Athena's Big Idea",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022314",
+    "status": "needs_expansion"
+  },
+  "LO_EP005": {
+    "episode_id": "LO_EP005",
+    "title": "The First Olympic Games",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022319",
+    "status": "needs_expansion"
+  },
+  "LO_EP006": {
+    "episode_id": "LO_EP006",
+    "title": "Achilles and the Magic Heel",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022324",
+    "status": "needs_expansion"
+  },
+  "LO_EP007": {
+    "episode_id": "LO_EP007",
+    "title": "Poseidon's Big Wave",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022329",
+    "status": "needs_expansion"
+  },
+  "LO_EP008": {
+    "episode_id": "LO_EP008",
+    "title": "Athena's Owl School",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022334",
+    "status": "needs_expansion"
+  },
+  "LO_EP009": {
+    "episode_id": "LO_EP009",
+    "title": "Hades Visits!",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022339",
+    "status": "needs_expansion"
+  },
+  "LO_EP010": {
+    "episode_id": "LO_EP010",
+    "title": "Something Rumbles Underground",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022343",
+    "status": "needs_expansion"
+  },
+  "LO_EP011": {
+    "episode_id": "LO_EP011",
+    "title": "Hermes's Mix-Up",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022348",
+    "status": "needs_expansion"
+  },
+  "LO_EP012": {
+    "episode_id": "LO_EP012",
+    "title": "Perseus Visits Again",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022353",
+    "status": "needs_expansion"
+  },
+  "LO_EP013": {
+    "episode_id": "LO_EP013",
+    "title": "Achilles's Best Race",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022357",
+    "status": "needs_expansion"
+  },
+  "LO_EP014": {
+    "episode_id": "LO_EP014",
+    "title": "Medusa Makes a Choice",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022362",
+    "status": "needs_expansion"
+  },
+  "LO_EP015": {
+    "episode_id": "LO_EP015",
+    "title": "The Titan Warning",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022367",
+    "status": "needs_expansion"
+  },
+  "LO_EP016": {
+    "episode_id": "LO_EP016",
+    "title": "Hercules's Big Day",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022371",
+    "status": "needs_expansion"
+  },
+  "LO_EP017": {
+    "episode_id": "LO_EP017",
+    "title": "Zeus Takes It Seriously",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022376",
+    "status": "needs_expansion"
+  },
+  "LO_EP018": {
+    "episode_id": "LO_EP018",
+    "title": "Athena's Warning",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022381",
+    "status": "needs_expansion"
+  },
+  "LO_EP019": {
+    "episode_id": "LO_EP019",
+    "title": "The Night Before",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022386",
+    "status": "needs_expansion"
+  },
+  "LO_EP020": {
+    "episode_id": "LO_EP020",
+    "title": "We Won't Face It Alone",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022391",
+    "status": "needs_expansion"
+  },
+  "LO_EP021": {
+    "episode_id": "LO_EP021",
+    "title": "The Morning After",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022395",
+    "status": "needs_expansion"
+  },
+  "LO_EP022": {
+    "episode_id": "LO_EP022",
+    "title": "Artemis Arrives",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022400",
+    "status": "needs_expansion"
+  },
+  "LO_EP023": {
+    "episode_id": "LO_EP023",
+    "title": "Achilles Changes His Training",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022405",
+    "status": "needs_expansion"
+  },
+  "LO_EP024": {
+    "episode_id": "LO_EP024",
+    "title": "Perseus and the West Garden",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022410",
+    "status": "needs_expansion"
+  },
+  "LO_EP025": {
+    "episode_id": "LO_EP025",
+    "title": "Apollo Visits",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022415",
+    "status": "needs_expansion"
+  },
+  "LO_EP026": {
+    "episode_id": "LO_EP026",
+    "title": "The Titan Speaks (Sort Of)",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022420",
+    "status": "needs_expansion"
+  },
+  "LO_EP027": {
+    "episode_id": "LO_EP027",
+    "title": "Poseidon's New Problem",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022424",
+    "status": "needs_expansion"
+  },
+  "LO_EP028": {
+    "episode_id": "LO_EP028",
+    "title": "Athena's New Data",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022429",
+    "status": "needs_expansion"
+  },
+  "LO_EP029": {
+    "episode_id": "LO_EP029",
+    "title": "The River the Titan Remembered",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022433",
+    "status": "needs_expansion"
+  },
+  "LO_EP030": {
+    "episode_id": "LO_EP030",
+    "title": "Medusa Sends Something",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022437",
+    "status": "needs_expansion"
+  },
+  "LO_EP033": {
+    "episode_id": "LO_EP033",
+    "title": "Achilles Runs a Drill",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022442",
+    "status": "needs_expansion"
+  },
+  "LO_EP034": {
+    "episode_id": "LO_EP034",
+    "title": "The Unnamed Snake Decides",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022446",
+    "status": "needs_expansion"
+  },
+  "LO_EP035": {
+    "episode_id": "LO_EP035",
+    "title": "What Oceanus Remembers",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022451",
+    "status": "needs_expansion"
+  },
+  "LO_EP036": {
+    "episode_id": "LO_EP036",
+    "title": "Hades's Left-Head Visit",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022456",
+    "status": "needs_expansion"
+  },
+  "LO_EP037": {
+    "episode_id": "LO_EP037",
+    "title": "Athena's Season Two Summary",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022460",
+    "status": "needs_expansion"
+  },
+  "LO_EP038": {
+    "episode_id": "LO_EP038",
+    "title": "The Titan Asks to See",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022465",
+    "status": "needs_expansion"
+  },
+  "LO_EP039": {
+    "episode_id": "LO_EP039",
+    "title": "What Archie Knows",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022469",
+    "status": "needs_expansion"
+  },
+  "LO_EP040": {
+    "episode_id": "LO_EP040",
+    "title": "The Last Morning of Season Two",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-07-11T15:57:48.022474",
+    "status": "needs_expansion"
+  },
+  "LO_OPENER": {
+    "episode_id": "LO_OPENER",
+    "title": "Little Olympus \u2014 Channel Opener",
+    "current_scenes": 5,
+    "current_duration_sec": 40,
+    "first_seen": "2026-07-11T15:57:48.022478",
+    "status": "needs_expansion"
+  }
+}

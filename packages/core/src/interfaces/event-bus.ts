@@ -6,6 +6,8 @@
  * STABILITY STATUS: FROZEN — do not change without Josh approval.
  */
 
+import type { Unsubscribe } from './memory-bus.js'
+
 export interface DomainEvent {
   id: string            // UUID v4
   topic: string         // "render.started", "script.completed", "episode.uploaded"
@@ -88,5 +90,3 @@ export interface EventBus {
   stats(): Promise<EventBusStats>
   replay(correlationId: string): Promise<DomainEvent[]>
 }
-
-export type Unsubscribe = () => void

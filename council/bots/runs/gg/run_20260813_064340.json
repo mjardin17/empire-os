@@ -1,0 +1,31 @@
+{
+  "run_id": "20260813_064340",
+  "channel": "gg",
+  "ran_at": "2026-08-13T06:44:08.802629",
+  "overall_status": "error",
+  "total_issues_found": 10,
+  "total_issues_fixed": 0,
+  "bots": [
+    {
+      "bot_name": "bot_19_wiring_inspector",
+      "ran_at": "2026-08-13T06:43:40.250720",
+      "status": "error",
+      "issues_found": 10,
+      "issues_fixed": 0,
+      "messages": [
+        "\u2717 render_commercial.py:11 calls empire_render.py without --channel, --episode \u2014 argparse will exit 2 and NOTHING will render. | video_pipeline_agent.py called `empire_render.py --script <path>` \u2014 but",
+        "\u2717 agents\\video_pipeline_agent.py:86 calls empire_render.py without --channel, --episode \u2014 argparse will exit 2 and NOTHING will render. | # FIXED 2026-08-12: was `empire_render.py --script {path}` \u2014 that",
+        "\u26a0 mission 'lo_ep001_render' (render) still in_progress after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'upload_lo_ep001' (upload) still pending after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'upload_gg_ep001' (upload) still pending after unknown age \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-test-workflow-001' (commercial) still pending after 90h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786296459' (commercial) still pending after 89h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786374118' (commercial) still pending after 68h \u2014 its consumer is not running or is failing silently",
+        "\u26a0 mission 'commercial-restored-1786374732' (commercial) still pending after 68h \u2014 its consumer is not running or is failing silently",
+        "\u2717 4 commercial render(s) prepared but produced NO MP4 \u2014 the render step is failing silently: .temp_commercial_commercial-restored-1786296459.json, .temp_commercial_commercial-restored-1786374118.json, .temp_commercial_commercial-restored-1786374732.json, .temp_commercial_commercial-test-workflow-001.json"
+      ],
+      "next_action": null
+    }
+  ],
+  "next_actions": []
+}

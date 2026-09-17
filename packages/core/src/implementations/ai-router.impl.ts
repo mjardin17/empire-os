@@ -23,9 +23,9 @@ import type {
  * Use this type in server.ts instead of casting to DefaultAIRouter.
  * Kept in implementations (not frozen interfaces) because it is a runtime concern.
  */
-export interface ConfigurableAIRouter extends import('../interfaces/index.js').AIRouter {
+export interface ConfigurableAIRouter extends AIRouter {
   registerAdapter(adapter: AIProviderAdapter): void
-  setDefaultStrategy(strategy: import('../interfaces/index.js').AIRoutingStrategy): Promise<void>
+  setDefaultStrategy(strategy: AIRoutingStrategy): Promise<void>
 }
 
 // Provider adapter interface — implement one per AI provider
@@ -41,16 +41,16 @@ export interface AIProviderAdapter {
 }
 
 // Routing table: task type → preferred provider order
-// Ollama (local, free) leads on cheap/routine tasks.
+// Ollama (local, free) leads on cheap/routine tasks. Inception for commercial cost-optimized.
 // Claude leads on code/architecture. Gemini on research/long-context.
 // OpenAI for tasks that specifically require GPT models.
 const TASK_ROUTING: Record<AITask['type'], AIProvider[]> = {
-  code:           ['anthropic', 'ollama', 'openai', 'deepseek'],
+  code:           ['anthropic', 'ollama', 'deepseek', 'openai'],
   research:       ['google',   'anthropic', 'ollama', 'openai'],
   script:         ['google',   'anthropic', 'ollama', 'openai'],
-  copy:           ['ollama',   'openai',    'anthropic', 'google'],
-  summary:        ['ollama',   'anthropic', 'google',    'openai'],
-  classification: ['ollama',   'anthropic', 'google',    'openai'],
+  copy:           ['inception', 'ollama', 'openai', 'anthropic', 'google'],
+  summary:        ['inception', 'ollama', 'anthropic', 'google', 'openai'],
+  classification: ['inception', 'ollama', 'anthropic', 'google', 'openai'],
 }
 
 // Strategy → model selection heuristic

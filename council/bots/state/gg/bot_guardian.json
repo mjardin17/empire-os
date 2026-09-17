@@ -1,0 +1,63 @@
+{
+  "broken_episodes": [
+    {
+      "episode": "GG_EP001",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP002",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP003",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP004",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP005",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP006",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP007",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP008",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP009",
+      "bad_clips": [
+        "scene_42.mp4"
+      ]
+    },
+    {
+      "episode": "GG_EP010",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP011",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_EP012",
+      "bad_clips": []
+    },
+    {
+      "episode": "GG_TRAILER",
+      "bad_clips": []
+    },
+    {
+      "episode": "LO_OPENER",
+      "bad_clips": []
+    }
+  ],
+  "last_updated": "2026-07-11T15:50:49.052385"
+}

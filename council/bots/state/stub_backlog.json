@@ -1,0 +1,674 @@
+{
+  "GG_EP012": {
+    "episode_id": "GG_EP012",
+    "title": "The Last Emperor",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086440",
+    "status": "needs_expansion"
+  },
+  "GG_EP013": {
+    "episode_id": "GG_EP013",
+    "title": "The Crusader Kingdoms",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086576",
+    "status": "needs_expansion"
+  },
+  "GG_EP014": {
+    "episode_id": "GG_EP014",
+    "title": "The Battle That Ended an Empire",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086592",
+    "status": "needs_expansion"
+  },
+  "GG_EP015": {
+    "episode_id": "GG_EP015",
+    "title": "Napoleon's Last Gamble",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086600",
+    "status": "needs_expansion"
+  },
+  "GG_EP016": {
+    "episode_id": "GG_EP016",
+    "title": "Battle of Marathon",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086606",
+    "status": "needs_expansion"
+  },
+  "GG_EP017": {
+    "episode_id": "GG_EP017",
+    "title": "Battle of Agincourt",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086612",
+    "status": "needs_expansion"
+  },
+  "GG_EP018": {
+    "episode_id": "GG_EP018",
+    "title": "Battle of Tours",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086618",
+    "status": "needs_expansion"
+  },
+  "GG_EP019": {
+    "episode_id": "GG_EP019",
+    "title": "Battle of Hastings",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086623",
+    "status": "needs_expansion"
+  },
+  "GG_EP020": {
+    "episode_id": "GG_EP020",
+    "title": "Mongol Invasion of Japan",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086629",
+    "status": "needs_expansion"
+  },
+  "GG_EP021": {
+    "episode_id": "GG_EP021",
+    "title": "Siege of Vienna",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086634",
+    "status": "needs_expansion"
+  },
+  "GG_EP022": {
+    "episode_id": "GG_EP022",
+    "title": "Battle of Midway",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086645",
+    "status": "needs_expansion"
+  },
+  "GG_EP023": {
+    "episode_id": "GG_EP023",
+    "title": "Battle of Stalingrad",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086653",
+    "status": "needs_expansion"
+  },
+  "GG_EP024": {
+    "episode_id": "GG_EP024",
+    "title": "D-Day: Normandy",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086657",
+    "status": "needs_expansion"
+  },
+  "GG_EP025": {
+    "episode_id": "GG_EP025",
+    "title": "Battle of Inchon",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086664",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP001": {
+    "episode_id": "GG_HIST_EP001",
+    "title": "The Inheritor",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086672",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP002": {
+    "episode_id": "GG_HIST_EP002",
+    "title": "The Bridge",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086678",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP003": {
+    "episode_id": "GG_HIST_EP003",
+    "title": "The Number",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086684",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP004": {
+    "episode_id": "GG_HIST_EP004",
+    "title": "The Immortals",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086689",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP005": {
+    "episode_id": "GG_HIST_EP005",
+    "title": "The Pass",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086693",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP006": {
+    "episode_id": "GG_HIST_EP006",
+    "title": "The Immortals Fail",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086702",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP007": {
+    "episode_id": "GG_HIST_EP007",
+    "title": "The Betrayal",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086709",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP008": {
+    "episode_id": "GG_HIST_EP008",
+    "title": "The Last Stand",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086714",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP009": {
+    "episode_id": "GG_HIST_EP009",
+    "title": "The Burning",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086728",
+    "status": "needs_expansion"
+  },
+  "GG_HIST_EP010": {
+    "episode_id": "GG_HIST_EP010",
+    "title": "The Immortal King",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086733",
+    "status": "needs_expansion"
+  },
+  "GG_TRAILER": {
+    "episode_id": "GG_TRAILER",
+    "title": "Gods & Glory \u2014 Channel Trailer",
+    "current_scenes": 6,
+    "current_duration_sec": 73,
+    "first_seen": "2026-06-27T17:27:27.086777",
+    "status": "needs_expansion"
+  },
+  "IL_EP001": {
+    "episode_id": "IL_EP001",
+    "title": "Origin: The First Transformer Wakes Up",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.086784",
+    "status": "needs_expansion"
+  },
+  "LO_EP002": {
+    "episode_id": "LO_EP002",
+    "title": "Baby Hercules and the Giant Snake",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086792",
+    "status": "needs_expansion"
+  },
+  "LO_EP003": {
+    "episode_id": "LO_EP003",
+    "title": "Perseus and the Tiny Medusa",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086798",
+    "status": "needs_expansion"
+  },
+  "LO_EP004": {
+    "episode_id": "LO_EP004",
+    "title": "Athena's Big Idea",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086804",
+    "status": "needs_expansion"
+  },
+  "LO_EP005": {
+    "episode_id": "LO_EP005",
+    "title": "The First Olympic Games",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086813",
+    "status": "needs_expansion"
+  },
+  "LO_EP006": {
+    "episode_id": "LO_EP006",
+    "title": "Achilles and the Magic Heel",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086818",
+    "status": "needs_expansion"
+  },
+  "LO_EP007": {
+    "episode_id": "LO_EP007",
+    "title": "Poseidon's Big Wave",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086823",
+    "status": "needs_expansion"
+  },
+  "LO_EP008": {
+    "episode_id": "LO_EP008",
+    "title": "Athena's Owl School",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086830",
+    "status": "needs_expansion"
+  },
+  "LO_EP009": {
+    "episode_id": "LO_EP009",
+    "title": "Hades Visits!",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086836",
+    "status": "needs_expansion"
+  },
+  "LO_EP010": {
+    "episode_id": "LO_EP010",
+    "title": "Something Rumbles Underground",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086843",
+    "status": "needs_expansion"
+  },
+  "LO_EP011": {
+    "episode_id": "LO_EP011",
+    "title": "Hermes's Mix-Up",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086848",
+    "status": "needs_expansion"
+  },
+  "LO_EP012": {
+    "episode_id": "LO_EP012",
+    "title": "Perseus Visits Again",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086854",
+    "status": "needs_expansion"
+  },
+  "LO_EP013": {
+    "episode_id": "LO_EP013",
+    "title": "Achilles's Best Race",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086860",
+    "status": "needs_expansion"
+  },
+  "LO_EP014": {
+    "episode_id": "LO_EP014",
+    "title": "Medusa Makes a Choice",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086866",
+    "status": "needs_expansion"
+  },
+  "LO_EP015": {
+    "episode_id": "LO_EP015",
+    "title": "The Titan Warning",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086875",
+    "status": "needs_expansion"
+  },
+  "LO_EP016": {
+    "episode_id": "LO_EP016",
+    "title": "Hercules's Big Day",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086882",
+    "status": "needs_expansion"
+  },
+  "LO_EP017": {
+    "episode_id": "LO_EP017",
+    "title": "Zeus Takes It Seriously",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086887",
+    "status": "needs_expansion"
+  },
+  "LO_EP018": {
+    "episode_id": "LO_EP018",
+    "title": "Athena's Warning",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086927",
+    "status": "needs_expansion"
+  },
+  "LO_EP019": {
+    "episode_id": "LO_EP019",
+    "title": "The Night Before",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086936",
+    "status": "needs_expansion"
+  },
+  "LO_EP020": {
+    "episode_id": "LO_EP020",
+    "title": "We Won't Face It Alone",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086942",
+    "status": "needs_expansion"
+  },
+  "LO_EP021": {
+    "episode_id": "LO_EP021",
+    "title": "The Morning After",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086947",
+    "status": "needs_expansion"
+  },
+  "LO_EP022": {
+    "episode_id": "LO_EP022",
+    "title": "Artemis Arrives",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086953",
+    "status": "needs_expansion"
+  },
+  "LO_EP023": {
+    "episode_id": "LO_EP023",
+    "title": "Achilles Changes His Training",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086958",
+    "status": "needs_expansion"
+  },
+  "LO_EP024": {
+    "episode_id": "LO_EP024",
+    "title": "Perseus and the West Garden",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086964",
+    "status": "needs_expansion"
+  },
+  "LO_EP025": {
+    "episode_id": "LO_EP025",
+    "title": "Apollo Visits",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086969",
+    "status": "needs_expansion"
+  },
+  "LO_EP026": {
+    "episode_id": "LO_EP026",
+    "title": "The Titan Speaks (Sort Of)",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086975",
+    "status": "needs_expansion"
+  },
+  "LO_EP027": {
+    "episode_id": "LO_EP027",
+    "title": "Poseidon's New Problem",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086979",
+    "status": "needs_expansion"
+  },
+  "LO_EP028": {
+    "episode_id": "LO_EP028",
+    "title": "Athena's New Data",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086986",
+    "status": "needs_expansion"
+  },
+  "LO_EP029": {
+    "episode_id": "LO_EP029",
+    "title": "The River the Titan Remembered",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.086996",
+    "status": "needs_expansion"
+  },
+  "LO_EP030": {
+    "episode_id": "LO_EP030",
+    "title": "Medusa Sends Something",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087002",
+    "status": "needs_expansion"
+  },
+  "LO_EP033": {
+    "episode_id": "LO_EP033",
+    "title": "Achilles Runs a Drill",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087006",
+    "status": "needs_expansion"
+  },
+  "LO_EP034": {
+    "episode_id": "LO_EP034",
+    "title": "The Unnamed Snake Decides",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087011",
+    "status": "needs_expansion"
+  },
+  "LO_EP035": {
+    "episode_id": "LO_EP035",
+    "title": "What Oceanus Remembers",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087016",
+    "status": "needs_expansion"
+  },
+  "LO_EP036": {
+    "episode_id": "LO_EP036",
+    "title": "Hades's Left-Head Visit",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087021",
+    "status": "needs_expansion"
+  },
+  "LO_EP037": {
+    "episode_id": "LO_EP037",
+    "title": "Athena's Season Two Summary",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087025",
+    "status": "needs_expansion"
+  },
+  "LO_EP038": {
+    "episode_id": "LO_EP038",
+    "title": "The Titan Asks to See",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087030",
+    "status": "needs_expansion"
+  },
+  "LO_EP039": {
+    "episode_id": "LO_EP039",
+    "title": "What Archie Knows",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087035",
+    "status": "needs_expansion"
+  },
+  "LO_EP040": {
+    "episode_id": "LO_EP040",
+    "title": "The Last Morning of Season Two",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087040",
+    "status": "needs_expansion"
+  },
+  "ML_EP002": {
+    "episode_id": "ML_EP002",
+    "title": "First Contact",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087047",
+    "status": "needs_expansion"
+  },
+  "ML_EP003": {
+    "episode_id": "ML_EP003",
+    "title": "Alone Against an Empire",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087053",
+    "status": "needs_expansion"
+  },
+  "ML_EP004": {
+    "episode_id": "ML_EP004",
+    "title": "17 Signals",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087065",
+    "status": "needs_expansion"
+  },
+  "ML_EP005": {
+    "episode_id": "ML_EP005",
+    "title": "The Counter",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087074",
+    "status": "needs_expansion"
+  },
+  "ML_EP006": {
+    "episode_id": "ML_EP006",
+    "title": "The Line",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087079",
+    "status": "needs_expansion"
+  },
+  "ML_EP007": {
+    "episode_id": "ML_EP007",
+    "title": "The Archive",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087085",
+    "status": "needs_expansion"
+  },
+  "ML_EP008": {
+    "episode_id": "ML_EP008",
+    "title": "The Advance",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087092",
+    "status": "needs_expansion"
+  },
+  "ML_EP009": {
+    "episode_id": "ML_EP009",
+    "title": "No Choice",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087098",
+    "status": "needs_expansion"
+  },
+  "ML_EP010": {
+    "episode_id": "ML_EP010",
+    "title": "What They Missed",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087103",
+    "status": "needs_expansion"
+  },
+  "ML_EP011": {
+    "episode_id": "ML_EP011",
+    "title": "Closer",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087109",
+    "status": "needs_expansion"
+  },
+  "ML_EP012": {
+    "episode_id": "ML_EP012",
+    "title": "HELD",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087115",
+    "status": "needs_expansion"
+  },
+  "ML_EP013": {
+    "episode_id": "ML_EP013",
+    "title": "Recovery",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087121",
+    "status": "needs_expansion"
+  },
+  "ML_EP014": {
+    "episode_id": "ML_EP014",
+    "title": "RUMBLE's New File",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087125",
+    "status": "needs_expansion"
+  },
+  "ML_EP015": {
+    "episode_id": "ML_EP015",
+    "title": "What BLAZE Can Do",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087134",
+    "status": "needs_expansion"
+  },
+  "ML_EP016": {
+    "episode_id": "ML_EP016",
+    "title": "SERA-1",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087143",
+    "status": "needs_expansion"
+  },
+  "ML_EP017": {
+    "episode_id": "ML_EP017",
+    "title": "What STORM Can Do",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087149",
+    "status": "needs_expansion"
+  },
+  "ML_EP018": {
+    "episode_id": "ML_EP018",
+    "title": "ECHO Learns",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087157",
+    "status": "needs_expansion"
+  },
+  "ML_EP019": {
+    "episode_id": "ML_EP019",
+    "title": "SERA-1's Archive",
+    "current_scenes": 7,
+    "current_duration_sec": 63,
+    "first_seen": "2026-06-27T17:27:27.087165",
+    "status": "needs_expansion"
+  },
+  "ML_EP020": {
+    "episode_id": "ML_EP020",
+    "title": "ELDER-7's Locked Memory",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087170",
+    "status": "needs_expansion"
+  },
+  "ML_EP022": {
+    "episode_id": "ML_EP022",
+    "title": "GRANITE Comes Back",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087176",
+    "status": "needs_expansion"
+  },
+  "ML_EP023": {
+    "episode_id": "ML_EP023",
+    "title": "C-0 Opens the Seal",
+    "current_scenes": 10,
+    "current_duration_sec": 90,
+    "first_seen": "2026-06-27T17:27:27.087181",
+    "status": "needs_expansion"
+  }
+}

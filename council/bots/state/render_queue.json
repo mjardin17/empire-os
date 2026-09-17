@@ -1,0 +1,68 @@
+[
+  {
+    "episode_id": "GG_EP026",
+    "title": "King Caesar",
+    "scene_count": 14,
+    "total_duration_sec": 690,
+    "queued_at": "2026-06-27T17:27:25.275056",
+    "status": "pending",
+    "has_partial_output": false
+  },
+  {
+    "episode_id": "LO_EP001",
+    "title": "Little Zeus Gets His Thunderbolt",
+    "scene_count": 24,
+    "total_duration_sec": 1065,
+    "queued_at": "2026-06-27T17:27:25.277268",
+    "status": "pending",
+    "has_partial_output": false
+  },
+  {
+    "episode_id": "GG_EP002",
+    "title": "Rome's Worst Day: The Slaughter at Cannae, 216 BC",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP002_cannae.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  },
+  {
+    "episode_id": "GG_EP003",
+    "title": "The Last Emperor: Constantinople Falls, 1453",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP003_constantinople.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  },
+  {
+    "episode_id": "GG_EP004",
+    "title": "The Forest That Broke Rome: Teutoburg, 9 AD",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP004_teutoburg.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  },
+  {
+    "episode_id": "GG_EP005",
+    "title": "Alexander vs the World: Gaugamela, 331 BC",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP005_gaugamela.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  },
+  {
+    "episode_id": "GG_EP006",
+    "title": "The Winged Hussars: How Europe Was Saved at Vienna, 1683",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP006_vienna.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  },
+  {
+    "episode_id": "GG_EP007",
+    "title": "Hitler's Obsession: The Death of the 6th Army at Stalingrad, 1942-43",
+    "channel": "GG",
+    "script_path": "C:\\Users\\jjard\\claude\\video-bot-pipeline\\prompts\\gods_glory\\GG_EP007_stalingrad.json",
+    "status": "pending",
+    "added_at": "2026-07-17T00:00:00"
+  }
+]

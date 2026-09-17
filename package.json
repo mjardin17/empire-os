@@ -7,7 +7,8 @@
     "test": "pnpm --filter @empire-os/core test",
     "test:watch": "pnpm --filter @empire-os/core test:watch",
     "start": "pnpm --filter @empire-os/server start",
-    "build": "pnpm --filter @empire-os/core build"
+    "build": "pnpm --filter @empire-os/core build",
+    "test-inception": "node test-inception.js"
   },
   "devDependencies": {
     "typescript": "^5.4.0"

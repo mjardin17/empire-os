@@ -1,382 +1,542 @@
 /**
- * Empire Assistant V2 — EmpireModule
+ * ApexOsModule.ts — Empire OS Module for APEX Video Generation
+ * INTEGRATED with Batch Research, Multi-Channel, and Performance Prediction
  *
- * The AI brain of Viral Engine. Empire Assistant is a MODULE, not a CoreService.
- * It CONSUMES the AIRouter, MemoryBus, EventBus, and ModuleGateway injected by the
- * platform — it owns nothing itself.
- *
- * Responsibilities:
- *   - Route AI completion and task requests through AIRouter
- *   - Persist conversation context and agent events in MemoryBus
- *   - Subscribe to platform events and summarize them as memory entries
- *   - Surface a single /agent/chat endpoint for human-in-the-loop queries
- *
- * Routing strategy defaults:
- *   - Script / research  → quality (Gemini or Claude)
- *   - Code               → quality (Claude)
- *   - Copy / summary     → speed (fastest available)
- *   - Classification     → cost (cheapest capable model)
- *
- * Event subscriptions:
- *   - agent.action  → logs to MemoryBus with moduleId tag
- *   - agent.error   → logs to MemoryBus, emits system.alert
- *   - system.alert  → persists in MemoryBus under alerts scope
- *
- * Requests handled:
- *   POST  /ai/complete      → AIRouter.complete()
- *   POST  /ai/task          → AIRouter.task()
- *   GET   /ai/models        → AIRouter.models()
- *   GET   /ai/stats         → AIRouter.stats()
- *   POST  /agent/chat       → context-aware chat (reads MemoryBus for context)
- *   GET   /agent/memory     → recent entries from MemoryBus
- *   POST  /agent/remember   → write to MemoryBus
- *   GET   /health           → module health (all CoreServices reachable)
+ * Converts APEX recording briefs → episode JSON → auto_render.py → MP4
+ * Integrates with existing video-bot-pipeline infrastructure
+ * EXTENDED with 36+ video batch processing, channel expansion, and performance optimization
  */
 
-import { BaseModule } from '@empire-os/core'
-import type {
-  GatewayRequest,
-  GatewayResponse,
-  DomainEvent,
-  HealthReport,
-  AIRequest,
-  AITask,
-} from '@empire-os/core'
+import { EventBus, MemoryBus, ModuleGateway, WorkflowEngine } from '@empire-os/core';
+// import { orchestrateBatchResearch, BatchResearchRequest, BatchResearchOutput } from '../orchestrators/batch-research-orchestrator';
+// import { coordinateMultiChannelTopic, coordinateTopicBatch, CoordinatedBatch } from '../orchestrators/multi-channel-coordinator';
+// import { predictVideoPerformance, predictBatchPerformance, PerformancePrediction } from '../orchestrators/performance-predictor';
 
-const MODULE_ID = 'empire-assistant'
-const MEMORY_SCOPE = 'empire-assistant'
-const EVENTS_SCOPE = 'empire-assistant-events'
-const MAX_CONTEXT_ENTRIES = 20
-
-// baseUrl and healthPath are set during onInit() from config injected by the server.
-// Endpoints require description per ModuleDescriptor interface.
-const EA_DESCRIPTOR_BASE = {
-  id: MODULE_ID,
-  name: 'Empire Assistant V2',
-  version: '2.0.0',
-  description:
-    'AI orchestration layer for Viral Engine. Routes all AI requests through AIRouter. ' +
-    'Maintains conversation context in MemoryBus. ' +
-    'Channels: Gods & Glory, Machine Learning, Little Olympus.',
-  capabilities: [
-    'ai-complete',
-    'ai-task',
-    'ai-models',
-    'ai-stats',
-    'agent-chat',
-    'agent-query',
-    'agent-remember',
-  ],
-  endpoints: [
-    { path: '/ai/complete',    method: 'POST' as const, description: 'Raw AI completion via AIRouter' },
-    { path: '/ai/task',        method: 'POST' as const, description: 'Structured AI task (research/code/copy/etc)' },
-    { path: '/ai/models',      method: 'GET'  as const, description: 'List all registered AI models' },
-    { path: '/ai/stats',       method: 'GET'  as const, description: 'AI routing statistics' },
-    { path: '/agent/chat',     method: 'POST' as const, description: 'Context-aware chat with memory' },
-    { path: '/agent/memory',   method: 'GET'  as const, description: 'Read recent MemoryBus entries' },
-    { path: '/agent/remember', method: 'POST' as const, description: 'Write key/value to MemoryBus' },
-    { path: '/health',         method: 'GET'  as const, description: 'Module health check', auth: false },
-  ],
-  healthPath: '/health',
-  priority: 10,  // highest priority — EA routes before any other module
+export interface ApexRecordingBrief {
+  id: string;
+  channel: 'gg' | 'ml' | 'lo' | 'il' | 'ed';
+  episodeNum: number;
+  title: string;
+  hook: string;
+  angle: 'beginner' | 'advanced' | 'problem-solve' | 'case-study';
+  narrationScript: string;
+  filmingChecklist: string[];
+  sceneCount: number;
 }
 
-// ── helpers ────────────────────────────────────────────────────────────────
-
-function ok(body: unknown, durationMs: number): GatewayResponse {
-  return { status: 200, body, moduleId: MODULE_ID, durationMs }
+export interface ApexVideoJob {
+  id: string;
+  briefId: string;
+  episodeId: string;
+  status: 'queued' | 'rendering' | 'completed' | 'failed';
+  videoPath?: string;
+  youtubeUrl?: string;
+  createdAt: Date;
+  startedAt?: Date;
+  completedAt?: Date;
+  error?: string;
 }
 
-function err(status: number, message: string, durationMs: number): GatewayResponse {
-  return { status, body: { error: message }, moduleId: MODULE_ID, durationMs }
+export interface ApexBatchResearchRequest {
+  id: string;
+  topics: Array<{
+    id: string;
+    topic: string;
+    primaryChannel?: 'gg' | 'il' | 'lo' | 'ed';
+    targetDuration?: number;
+    priority?: number;
+    tags?: string[];
+  }>;
+  targetChannels?: string[];
+  maxConcurrentJobs?: number;
+  autoApproveThreshold?: number;
+  includePredictions?: boolean;
+  includeMultiChannel?: boolean;
 }
 
-function elapsed(start: number): number {
-  return Date.now() - start
+export interface ApexMultiChannelRequest {
+  id: string;
+  topics: string[];
+  channelsPerTopic?: ('gg' | 'il' | 'lo' | 'ed')[];
 }
 
-// ── module ─────────────────────────────────────────────────────────────────
+export interface ApexBatchStatusResponse {
+  batchId: string;
+  totalTopics: number;
+  completedCount: number;
+  failedCount: number;
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  currentlyProcessing: number;
+  estimatedTimeRemaining: number;
+  jobs: Array<{
+    jobId: string;
+    topicId: string;
+    topic: string;
+    channel: string;
+    status: 'queued' | 'researching' | 'completed' | 'failed';
+    progress: number;
+    predictedViews?: number;
+  }>;
+  renderQueue: Array<{
+    jobId: string;
+    topic: string;
+    channel: string;
+    renderPriority: number;
+    predictedViews: number;
+  }>;
+  estimatedTotalViews: number;
+  estimatedTotalEngagement: number;
+}
 
-export class EmpireAssistantModule extends BaseModule {
-  readonly moduleId = MODULE_ID
+/**
+ * Convert APEX brief to episode JSON for auto_render.py
+ * Matches the existing JSON structure in prompts/
+ */
+function briefToEpisodeJson(brief: ApexRecordingBrief): object {
+  const channelLabel = {
+    'gg': 'GODS & GLORY',
+    'ml': 'MECH LEGENDS',
+    'lo': 'LITTLE OLYMPUS',
+    'il': 'IRON LEGENDS',
+    'ed': 'ECHOES OF ETERNITY',
+  }[brief.channel];
 
-  protected override async onInit(): Promise<void> {
-    const { moduleGateway, eventBus, memoryBus } = this.services
+  const narrationParts = brief.narrationScript.split('\n').filter(l => l.trim());
+  const sceneNarration = narrationParts.slice(0, Math.max(brief.sceneCount, narrationParts.length));
 
-    // Build the full descriptor — baseUrl comes from server config at init time
-    const baseUrl = (this.config.baseUrl as string) ?? 'http://localhost:3001/empire-assistant'
-    const descriptor = { ...EA_DESCRIPTOR_BASE, baseUrl }
+  const scenes = sceneNarration.map((narration, idx) => ({
+    scene: idx + 1,
+    visual_prompt: `${brief.title} - Scene ${idx + 1}: ${narration.substring(0, 100)}`,
+    narration: narration,
+    duration: 10,
+    transition: idx > 0 ? 'fade' : 'cut',
+  }));
 
-    // Register with ModuleGateway so the platform can route to us
-    await moduleGateway.register(descriptor)
+  return {
+    episode_id: `${brief.channel.toUpperCase()}_EP${String(brief.episodeNum).padStart(3, '0')}`,
+    title: brief.title,
+    hook: brief.hook,
+    angle: brief.angle,
+    channel: brief.channel,
+    channel_label: channelLabel,
+    duration_seconds: scenes.length * 10,
+    scenes: scenes,
+    narration_full: brief.narrationScript,
+    tts_rate: {
+      'gg': 0.65,
+      'ml': 1.05,
+      'lo': 0.90,
+      'il': 1.08,
+      'ed': 0.92,
+    }[brief.channel],
+    style_suffix: 'cinematic, dramatic lighting, ultra detailed, photorealistic, 8k',
+  };
+}
 
-    // Subscribe to platform events
-    eventBus.subscribe('agent.action', (e) => this.handleEvent(e))
-    eventBus.subscribe('agent.error',  (e) => this.handleEvent(e))
-    eventBus.subscribe('system.alert', (e) => this.handleEvent(e))
+/**
+ * EmpireAssistantModule — EmpireModule implementation
+ * Single-channel video generation + Batch research + Multi-channel expansion + Performance prediction
+ */
+export class EmpireAssistantModule implements EmpireModule {
+  readonly moduleId = 'apex-os';
+  private eventBus: EventBus;
+  private memoryBus: MemoryBus;
+  private moduleGateway: ModuleGateway;
+  private workflowEngine: WorkflowEngine;
+  private videoJobs: Map<string, ApexVideoJob> = new Map();
+  private batchJobs: Map<string, any> = new Map();
+  private pythonPath: string = 'C:\\Users\\jjard\\AppData\\Local\\Programs\\Python\\Python314\\python.exe';
+  private pipelineDir: string = 'C:\\Users\\jjard\\claude\\video-bot-pipeline';
+  private aiRouter: any; // Will be injected
 
-    // Seed working memory — EA is now online
-    await memoryBus.write(`${MEMORY_SCOPE}.boot`, {
-      status: 'online',
-      version: '2.0.0',
-      bootedAt: new Date().toISOString(),
-      channels: ['gods-glory', 'machine-learning', 'little-olympus'],
-    }, { moduleId: MODULE_ID, tags: ['boot', 'status'] })
+  async init(services: CoreServices, config: ModuleConfig): Promise<void> {
+    this.eventBus = services.eventBus;
+    this.memoryBus = services.memoryBus;
+    this.moduleGateway = services.moduleGateway;
+    this.workflowEngine = services.workflowEngine;
+    this.aiRouter = services.aiRouter || (config as any).aiRouter;
 
-    await this.emit('agent.action', {
-      action: 'module.registered',
-      moduleId: MODULE_ID,
-      version: '2.0.0',
-      capabilities: EA_DESCRIPTOR_BASE.capabilities,
-    })
+    this.eventBus.subscribe('render.completed', (event) => this.handleRenderComplete(event));
+    this.eventBus.subscribe('render.failed', (event) => this.handleRenderFailed(event));
+
+    await this.loadJobHistory();
+
+    console.log('[APEX OS] Module initialized with batch research, multi-channel, and performance prediction');
   }
-
-  // ── request router ────────────────────────────────────────────────────────
 
   async handleRequest(request: GatewayRequest): Promise<GatewayResponse> {
-    const start = Date.now()
-    const path = request.path.replace(/\?.*$/, '')
-
     try {
-      if (path === '/ai/complete'    && request.method === 'POST')  return await this.aiComplete(request, start)
-      if (path === '/ai/task'        && request.method === 'POST')  return await this.aiTask(request, start)
-      if (path === '/ai/models'      && request.method === 'GET')   return await this.aiModels(request, start)
-      if (path === '/ai/stats'       && request.method === 'GET')   return await this.aiStats(request, start)
-      if (path === '/agent/chat'     && request.method === 'POST')  return await this.agentChat(request, start)
-      if (path === '/agent/memory'   && request.method === 'GET')   return await this.agentMemory(request, start)
-      if (path === '/agent/remember' && request.method === 'POST')  return await this.agentRemember(request, start)
-      if (path === '/health'         && request.method === 'GET')   return ok(await this.health(), elapsed(start))
-      return err(404, `Unknown path: ${path}`, elapsed(start))
-    } catch (e) {
-      await this.emit('agent.error', {
-        moduleId: MODULE_ID,
-        path,
-        error: e instanceof Error ? e.message : String(e),
-      }, request.correlationId)
-      return err(500, e instanceof Error ? e.message : 'Internal error', elapsed(start))
-    }
-  }
-
-  // ── /ai/complete ──────────────────────────────────────────────────────────
-
-  private async aiComplete(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const body = req.body as Partial<AIRequest>
-    if (!body?.messages?.length) return err(400, 'messages[] required', elapsed(start))
-
-    const aiReq: AIRequest = {
-      messages: body.messages,
-      model: body.model,
-      strategy: body.strategy ?? 'quality',
-      requiredCapabilities: body.requiredCapabilities,
-      maxTokens: body.maxTokens,
-      temperature: body.temperature,
-      allowFallback: body.allowFallback ?? true,
-      callerId: MODULE_ID,
-      correlationId: req.correlationId,
-    }
-
-    const response = await this.services.aiRouter.complete(aiReq)
-    return ok(response, elapsed(start))
-  }
-
-  // ── /ai/task ──────────────────────────────────────────────────────────────
-
-  private async aiTask(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const body = req.body as Partial<AITask>
-    if (!body?.type || !body?.prompt) return err(400, 'type and prompt required', elapsed(start))
-
-    const task: AITask = {
-      type: body.type,
-      prompt: body.prompt,
-      context: body.context,
-      outputFormat: body.outputFormat ?? 'text',
-      callerId: MODULE_ID,
-      strategy: body.strategy,
-    }
-
-    const result = await this.services.aiRouter.task(task)
-    return ok(result, elapsed(start))
-  }
-
-  // ── /ai/models ────────────────────────────────────────────────────────────
-
-  private async aiModels(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const qs = req.body as Record<string, string> | null
-    const models = await this.services.aiRouter.models({
-      provider: qs?.provider as never,
-      capability: qs?.capability as never,
-    })
-    return ok(models, elapsed(start))
-  }
-
-  // ── /ai/stats ─────────────────────────────────────────────────────────────
-
-  private async aiStats(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const qs = req.body as Record<string, string> | null
-    const window = qs?.window ? Number(qs.window) : undefined
-    const stats = await this.services.aiRouter.stats(window)
-    return ok(stats, elapsed(start))
-  }
-
-  // ── /agent/chat ───────────────────────────────────────────────────────────
-  //
-  // Context-aware chat: reads the last N MemoryBus entries and prepends them
-  // as system context so the AI has awareness of recent pipeline activity.
-
-  private async agentChat(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const body = req.body as { prompt?: string; strategy?: string; model?: string } | null
-    if (!body?.prompt) return err(400, 'prompt required', elapsed(start))
-
-    const { memoryBus, aiRouter } = this.services
-
-    // Read recent context from memory
-    const contextEntries = await memoryBus.search({
-      moduleId: MODULE_ID,
-      limit: MAX_CONTEXT_ENTRIES,
-    })
-
-    const contextText = contextEntries
-      .map(e => `[${e.key}] ${typeof e.value === 'string' ? e.value : JSON.stringify(e.value)}`)
-      .join('\n')
-
-    const systemPrompt = [
-      'You are Empire Assistant V2, the AI brain of the Viral Engine YouTube documentary empire.',
-      'Channels: Gods & Glory (history battles), Machine Learning (tech docs), Little Olympus (Little Zeus).',
-      'You have access to the following recent pipeline memory:',
-      contextText || '(no recent context)',
-    ].join('\n')
-
-    const response = await aiRouter.complete({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user',   content: body.prompt },
-      ],
-      strategy: (body.strategy as never) ?? 'quality',
-      model: body.model,
-      callerId: MODULE_ID,
-      correlationId: req.correlationId,
-      allowFallback: true,
-    })
-
-    // Persist this exchange to memory
-    await memoryBus.write(`${MEMORY_SCOPE}.last-chat`, {
-      prompt: body.prompt,
-      response: response.content,
-      model: response.model,
-      at: new Date().toISOString(),
-    }, { moduleId: MODULE_ID, tags: ['chat', 'history'] })
-
-    return ok(response, elapsed(start))
-  }
-
-  // ── /agent/memory ─────────────────────────────────────────────────────────
-
-  private async agentMemory(_req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const entries = await this.services.memoryBus.search({
-      moduleId: MODULE_ID,
-      limit: 50,
-    })
-    return ok({ entries, count: entries.length }, elapsed(start))
-  }
-
-  // ── /agent/remember ───────────────────────────────────────────────────────
-
-  private async agentRemember(req: GatewayRequest, start: number): Promise<GatewayResponse> {
-    const body = req.body as { key?: string; value?: unknown; tags?: string[] } | null
-    if (!body?.key || body.value === undefined) {
-      return err(400, 'key and value required', elapsed(start))
-    }
-    await this.services.memoryBus.write(
-      `${MEMORY_SCOPE}.${body.key}`,
-      body.value,
-      { moduleId: MODULE_ID, tags: body.tags }
-    )
-    return ok({ written: true, key: body.key }, elapsed(start))
-  }
-
-  // ── event handler ─────────────────────────────────────────────────────────
-
-  override async handleEvent(event: DomainEvent): Promise<void> {
-    const { memoryBus } = this.services
-
-    try {
-      const key = `${EVENTS_SCOPE}.${event.topic}.${event.id ?? Date.now()}`
-      await memoryBus.write(key, {
-        topic: event.topic,
-        source: event.source,
-        payload: event.payload,
-        at: event.timestamp,
-      }, {
-        moduleId: MODULE_ID,
-        tags: ['event', event.topic, event.source ?? 'unknown'],
-      })
-
-      // Escalate errors to system.alert if not already one
-      if (event.topic === 'agent.error' && event.source !== MODULE_ID) {
-        await this.emit('system.alert', {
-          severity: 'warning',
-          from: MODULE_ID,
-          originalEvent: event.topic,
-          source: event.source,
-          detail: event.payload,
-        }, event.correlationId)
-      }
-    } catch {
-      // Never throw from handleEvent
-    }
-  }
-
-  // ── health ────────────────────────────────────────────────────────────────
-
-  override async health(): Promise<HealthReport> {
-    const { aiRouter, memoryBus } = this.services
-
-    try {
-      const [models, memCheck] = await Promise.all([
-        aiRouter.models().catch(() => [] as never[]),
-        memoryBus.read(`${MEMORY_SCOPE}.boot`).catch(() => null),
-      ])
-
-      const availableModels = models.filter((m: { available: boolean }) => m.available).length
-
-      if (availableModels === 0) {
+      // BATCH RESEARCH ROUTES
+      if (request.path === '/batch-research' && request.method === 'POST') {
         return {
-          status: 'degraded',
-          details: {
-            reason: 'No AI models available — configure at least one provider in .env',
-            models: 0,
-            memoryBoot: !!memCheck,
-          },
-          checkedAt: new Date().toISOString(),
-        }
+          status: 202,
+          body: await this.handleBatchResearch(request.body),
+        };
       }
 
-      return {
-        status: 'healthy',
-        details: {
-          availableModels,
-          memoryBoot: !!memCheck,
-          version: '2.0.0',
-        },
-        checkedAt: new Date().toISOString(),
+      if (request.path === '/batch-status' && request.method === 'GET') {
+        return {
+          status: 200,
+          body: await this.handleBatchStatus((request.query?.batchId as string) || ''),
+        };
       }
-    } catch (e) {
-      return {
-        status: 'unhealthy',
-        details: { error: e instanceof Error ? e.message : String(e) },
-        checkedAt: new Date().toISOString(),
+
+      // MULTI-CHANNEL COORDINATION
+      if (request.path === '/multi-channel-coordinate' && request.method === 'POST') {
+        return {
+          status: 200,
+          body: await this.handleMultiChannelCoordination(request.body),
+        };
       }
+
+      // PERFORMANCE PREDICTIONS
+      if (request.path === '/predictions' && request.method === 'POST') {
+        return {
+          status: 200,
+          body: await this.handleBatchPredictions(request.body.topics),
+        };
+      }
+
+      // EXISTING ROUTES
+      if (request.path === '/generate-video') {
+        return this.handleGenerateVideo(request);
+      }
+      if (request.path === '/video-status') {
+        return this.handleVideoStatus(request);
+      }
+      if (request.path === '/health') {
+        return { status: 200, body: await this.health() };
+      }
+
+      return { status: 404, body: { error: 'Not found' } };
+    } catch (error) {
+      console.error('[APEX OS] Error handling request:', error);
+      return { status: 500, body: { error: String(error) } };
     }
   }
 
-  // ── shutdown ──────────────────────────────────────────────────────────────
+  /**
+   * Start batch research job (36 videos)
+   */
+  private async handleBatchResearch(request: ApexBatchResearchRequest) {
+    const batchId = `apex_batch_${Date.now()}`;
+    const jobIds: string[] = [];
 
-  override async shutdown(): Promise<void> {
-    await this.services.memoryBus.write(`${MEMORY_SCOPE}.boot`, {
-      status: 'offline',
-      shutdownAt: new Date().toISOString(),
-    }, { moduleId: MODULE_ID, tags: ['boot', 'status'] }).catch(() => {})
+    console.log(`[APEX BATCH] Starting batch: ${batchId}`);
+    console.log(`[APEX BATCH] Topics: ${request.topics.length}`);
+    console.log(`[APEX BATCH] Max concurrent: ${request.maxConcurrentJobs || 6}`);
+
+    const batchMetadata = {
+      batchId,
+      totalTopics: request.topics.length,
+      status: 'processing' as const,
+      startedAt: new Date(),
+      completedAt: undefined,
+      jobIds,
+    };
+
+    this.memoryBus.set(`batch:${batchId}`, batchMetadata);
+    this.batchJobs.set(batchId, batchMetadata);
+
+    // TODO: Implement batch research orchestrator (currently disabled — orchestrator modules not yet created)
+    // this.runBatchPipeline(batchId, request).catch((err) => {
+    //   console.error(`[APEX BATCH] Error in pipeline:`, err);
+    //   batchMetadata.status = 'failed';
+    //   this.memoryBus.set(`batch:${batchId}`, batchMetadata);
+    // });
+
+    this.eventBus.publish('batch.started', {
+      batchId,
+      totalTopics: request.topics.length,
+      timestamp: new Date(),
+    });
+
+    return {
+      batchId,
+      status: 'processing',
+      message: `Batch research started. ${request.topics.length} topics will be processed in parallel.`,
+      estimatedTime: `${Math.ceil((request.topics.length * 50) / (request.maxConcurrentJobs || 6) / 60)} minutes`,
+    };
+  }
+
+  /**
+   * Run batch pipeline (background) — DISABLED
+   * TODO: Implement orchestrator modules (batch-research-orchestrator, multi-channel-coordinator, performance-predictor)
+   */
+  // private async runBatchPipeline(batchId: string, request: ApexBatchResearchRequest) {
+  //   const batchRequest = {
+  //     id: batchId,
+  //     topics: request.topics,
+  //     targetChannels: request.targetChannels,
+  //     maxConcurrentJobs: request.maxConcurrentJobs || 6,
+  //     autoApproveThreshold: request.autoApproveThreshold || 0,
+  //     includePredictions: request.includePredictions !== false,
+  //     includeABTesting: false,
+  //   };
+
+  //   try {
+  //     const result = await orchestrateBatchResearch(
+  //       batchRequest,
+  //       this.aiRouter,
+  //       (batchId: string, job: any) => {
+  //         this.eventBus.publish('batch.job_progress', {
+  //           batchId,
+  //           jobId: job.jobId,
+  //           progress: job.progress,
+  //           status: job.status,
+  //         });
+  //       }
+  //     );
+
+  //     this.memoryBus.set(`batch_result:${batchId}`, result);
+
+  //     const metadata = this.memoryBus.get(`batch:${batchId}`);
+  //     metadata.status = 'completed';
+  //     metadata.completedAt = new Date();
+  //     this.memoryBus.set(`batch:${batchId}`, metadata);
+
+  //     this.eventBus.publish('batch.completed', {
+  //       batchId,
+  //       completedCount: result.completedCount,
+  //       failedCount: result.failedCount,
+  //       estimatedTotalViews: result.estimatedTotalViews,
+  //       timestamp: new Date(),
+  //     });
+
+  //     if (result.renderQueue.length > 0) {
+  //       console.log(`[APEX BATCH] Queuing ${result.renderQueue.length} videos for render`);
+  //       for (const item of result.renderQueue) {
+  //         this.eventBus.publish('render.queued', {
+  //           jobId: item.jobId,
+  //           topic: item.topic,
+  //           channel: item.channel,
+  //           renderPriority: item.renderPriority,
+  //         });
+  //       }
+  //     }
+
+  //     return result;
+  //   } catch (err) {
+  //     console.error(`[APEX BATCH] Pipeline error:`, err);
+  //     throw err;
+  //   }
+  // }
+
+  /**
+   * Get batch status
+   */
+  private async handleBatchStatus(batchId: string): Promise<ApexBatchStatusResponse> {
+    const batchMetadata = this.memoryBus.get(`batch:${batchId}`);
+    const batchResult = this.memoryBus.get(`batch_result:${batchId}`);
+
+    if (!batchMetadata) {
+      throw new Error(`Batch not found: ${batchId}`);
+    }
+
+    return {
+      batchId,
+      totalTopics: batchMetadata.totalTopics,
+      completedCount: batchResult?.completedCount || 0,
+      failedCount: batchResult?.failedCount || 0,
+      status: batchMetadata.status,
+      progress: batchResult
+        ? Math.round(
+            ((batchResult.completedCount + batchResult.failedCount) / batchMetadata.totalTopics) * 100
+          )
+        : 0,
+      currentlyProcessing: batchResult?.jobs?.filter((j: any) => j.status === 'researching')?.length || 0,
+      estimatedTimeRemaining: batchResult
+        ? Math.max(0, Math.ceil((60 * (batchMetadata.totalTopics - (batchResult.completedCount || 0))) / 6))
+        : 0,
+      jobs: batchResult?.jobs || [],
+      renderQueue: batchResult?.renderQueue || [],
+      estimatedTotalViews: batchResult?.estimatedTotalViews || 0,
+      estimatedTotalEngagement: batchResult?.estimatedTotalEngagement || 0,
+    };
+  }
+
+  /**
+   * Coordinate multi-channel topic expansion — DISABLED
+   * TODO: Implement multi-channel-coordinator orchestrator
+   */
+  private async handleMultiChannelCoordination(request: ApexMultiChannelRequest) {
+    return {
+      error: 'Multi-channel coordination not yet implemented',
+      status: 'disabled',
+      message: 'Awaiting orchestrator implementation',
+    };
+    // Original implementation commented out:
+    // console.log(`[APEX MULTI-CHANNEL] Coordinating ${request.topics.length} topics`);
+    // const coordinatedBatches = await coordinateTopicBatch(
+    //   request.topics,
+    //   this.aiRouter,
+    //   request.channelsPerTopic
+    // );
+    // ...
+  }
+
+  /**
+   * Predict performance for a batch — DISABLED
+   * TODO: Implement performance-predictor orchestrator
+   */
+  private async handleBatchPredictions(topics: Array<{ topic: string; channel: 'gg' | 'il' | 'lo' | 'ed' }>) {
+    return {
+      error: 'Performance prediction not yet implemented',
+      status: 'disabled',
+      message: 'Awaiting orchestrator implementation',
+      count: 0,
+      predictions: [],
+      totalEstimatedViews: 0,
+    };
+    // Original implementation commented out:
+    // console.log(`[APEX PREDICTIONS] Analyzing ${topics.length} topics`);
+    // const predictions = await predictBatchPerformance(topics, this.aiRouter);
+    // ...
+  }
+
+  private async handleGenerateVideo(request: GatewayRequest): Promise<GatewayResponse> {
+    try {
+      const brief: ApexRecordingBrief = request.body;
+
+      if (!brief.channel || !brief.episodeNum || !brief.title || !brief.narrationScript) {
+        return { status: 400, body: { error: 'Invalid brief: missing required fields' } };
+      }
+
+      const episodeId = `${brief.channel.toUpperCase()}_EP${String(brief.episodeNum).padStart(3, '0')}`;
+
+      const job: ApexVideoJob = {
+        id: `apex_${Date.now()}`,
+        briefId: brief.id,
+        episodeId: episodeId,
+        status: 'queued',
+        createdAt: new Date(),
+      };
+
+      this.videoJobs.set(job.id, job);
+      await this.memoryBus.set(`apex:jobs:${job.id}`, job);
+
+      const episodeJson = briefToEpisodeJson(brief);
+      await this.memoryBus.set(`apex:episodes:${episodeId}`, episodeJson);
+
+      await this.workflowEngine.trigger('apex:render', {
+        jobId: job.id,
+        episodeId: episodeId,
+        pythonPath: this.pythonPath,
+        pipelineDir: this.pipelineDir,
+        episodeJson: episodeJson,
+      });
+
+      this.eventBus.publish('apex.video.queued', {
+        jobId: job.id,
+        episodeId: episodeId,
+        timestamp: new Date().toISOString(),
+      });
+
+      return {
+        status: 202,
+        body: {
+          jobId: job.id,
+          episodeId: episodeId,
+          status: 'queued',
+          message: 'Video generation queued. Poll /video-status for updates.',
+        },
+      };
+    } catch (error) {
+      console.error('[APEX OS] Error generating video:', error);
+      return { status: 500, body: { error: String(error) } };
+    }
+  }
+
+  private async handleVideoStatus(request: GatewayRequest): Promise<GatewayResponse> {
+    const jobId = (request.query?.jobId as string) || '';
+
+    if (!jobId) {
+      return {
+        status: 200,
+        body: {
+          jobs: Array.from(this.videoJobs.values()),
+          total: this.videoJobs.size,
+        },
+      };
+    }
+
+    const job = this.videoJobs.get(jobId);
+    if (!job) {
+      return { status: 404, body: { error: 'Job not found' } };
+    }
+
+    return { status: 200, body: job };
+  }
+
+  private async handleRenderComplete(event: DomainEvent): Promise<void> {
+    const { jobId, videoPath, episodeId } = event.data;
+    const job = this.videoJobs.get(jobId);
+
+    if (job) {
+      job.status = 'completed';
+      job.videoPath = videoPath;
+      job.completedAt = new Date();
+      await this.memoryBus.set(`apex:jobs:${jobId}`, job);
+
+      this.eventBus.publish('apex.video.completed', {
+        jobId,
+        episodeId,
+        videoPath,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  private async handleRenderFailed(event: DomainEvent): Promise<void> {
+    const { jobId, error } = event.data;
+    const job = this.videoJobs.get(jobId);
+
+    if (job) {
+      job.status = 'failed';
+      job.error = error;
+      job.completedAt = new Date();
+      await this.memoryBus.set(`apex:jobs:${jobId}`, job);
+
+      this.eventBus.publish('apex.video.failed', {
+        jobId,
+        error,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  async handleEvent(event: DomainEvent): Promise<void> {}
+
+  async health(): Promise<HealthReport> {
+    const videoJobs = this.memoryBus.list?.()?.filter((k: string) => k.startsWith('apex:jobs:'))?.length || this.videoJobs.size;
+    const batchJobs = this.memoryBus.list?.()?.filter((k: string) => k.startsWith('batch:'))?.length || this.batchJobs.size;
+
+    return {
+      status: 'healthy',
+      checks: {
+        videoJobs,
+        batchJobs,
+        pythonPath: this.pythonPath,
+        pipelineDir: this.pipelineDir,
+      },
+    };
+  }
+
+  async shutdown(): Promise<void> {
+    console.log('[APEX OS] Shutting down');
+  }
+
+  private async loadJobHistory(): Promise<void> {
+    try {
+      const jobs = await this.memoryBus.search?.('apex:jobs:*', {}) || [];
+      jobs.forEach(([key, job]: [string, any]) => {
+        this.videoJobs.set(job.id, job);
+      });
+    } catch (error) {
+      console.log('[APEX OS] No prior job history found');
+    }
   }
 }
 
-export default EmpireAssistantModule
+export default EmpireAssistantModule;

@@ -1,0 +1,37 @@
+{
+  "broken_episodes": [
+    {
+      "episode": "GG_EP006",
+      "bad_clips": [
+        "scene_04.mp4",
+        "scene_05.mp4",
+        "scene_06.mp4",
+        "scene_07.mp4",
+        "scene_08.mp4",
+        "scene_09.mp4",
+        "scene_10.mp4",
+        "scene_11.mp4",
+        "scene_12.mp4",
+        "scene_13.mp4",
+        "scene_14.mp4",
+        "scene_15.mp4",
+        "scene_16.mp4",
+        "scene_17.mp4",
+        "scene_18.mp4",
+        "scene_19.mp4",
+        "scene_20.mp4",
+        "scene_21.mp4",
+        "scene_22.mp4",
+        "scene_23.mp4",
+        "scene_24.mp4"
+      ]
+    },
+    {
+      "episode": "GG_TRAILER",
+      "bad_clips": [
+        "scene_03.mp4"
+      ]
+    }
+  ],
+  "last_updated": "2026-06-27T14:01:11.919569"
+}

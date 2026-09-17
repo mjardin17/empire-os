@@ -19,7 +19,6 @@ function makeModel(
   return {
     id,
     provider,
-    name: id,
     capabilities: capabilities as AIModel['capabilities'],
     contextWindow,
     costPerMToken,
@@ -76,6 +75,7 @@ describe('DefaultAIRouter', () => {
       router.registerAdapter(makeAdapter('anthropic', [model], true, 'Hello!'))
 
       const response = await router.complete({
+        callerId: 'test-caller',
         messages: [{ role: 'user', content: 'Say hello' }],
       })
 
@@ -92,6 +92,7 @@ describe('DefaultAIRouter', () => {
       router.registerAdapter(makeAdapter('openai', [m2]))
 
       const response = await router.complete({
+        callerId: 'test-caller',
         messages: [{ role: 'user', content: 'test' }],
         model: 'gpt-4',
       })
@@ -101,7 +102,7 @@ describe('DefaultAIRouter', () => {
 
     it('throws when no adapter is registered', async () => {
       await expect(
-        router.complete({ messages: [{ role: 'user', content: 'x' }] })
+        router.complete({ callerId: 'test-caller', messages: [{ role: 'user', content: 'x' }] })
       ).rejects.toThrow('[AIRouter] No available model matches request')
     })
 
@@ -111,6 +112,7 @@ describe('DefaultAIRouter', () => {
 
       await expect(
         router.complete({
+          callerId: 'test-caller',
           messages: [{ role: 'user', content: 'x' }],
           allowFallback: false,
         })
@@ -134,6 +136,7 @@ describe('DefaultAIRouter', () => {
       router.registerAdapter(fallbackAdapter)
 
       const response = await router.complete({
+        callerId: 'test-caller',
         messages: [{ role: 'user', content: 'test' }],
         allowFallback: true,
       })
@@ -151,6 +154,7 @@ describe('DefaultAIRouter', () => {
 
       await expect(
         router.complete({
+          callerId: 'test',
           messages: [{ role: 'user', content: 'test' }],
           allowFallback: true,
         })
@@ -167,6 +171,7 @@ describe('DefaultAIRouter', () => {
 
       await expect(
         router.complete({
+          callerId: 'test-caller',
           messages: [{ role: 'user', content: 'x' }],
           strategy: 'local-only',
         })
@@ -179,6 +184,7 @@ describe('DefaultAIRouter', () => {
       router.registerAdapter(adapter)
 
       const response = await router.complete({
+        callerId: 'test-caller',
         messages: [{ role: 'user', content: 'local test' }],
         strategy: 'local-only',
       })
@@ -195,7 +201,7 @@ describe('DefaultAIRouter', () => {
       const model = makeModel('claude-3', 'anthropic', ['completion', 'code'])
       router.registerAdapter(makeAdapter('anthropic', [model], true, 'const x = 1'))
 
-      const result = await router.task({ type: 'code', prompt: 'write a variable' })
+      const result = await router.task({ callerId: 'test-caller', type: 'code', prompt: 'write a variable' })
       expect(result.output).toBe('const x = 1')
       expect(result.model).toBe('claude-3')
     })
@@ -205,6 +211,7 @@ describe('DefaultAIRouter', () => {
       router.registerAdapter(makeAdapter('anthropic', [model], true, '{"key":"value"}'))
 
       const result = await router.task({
+        callerId: 'test-caller',
         type: 'summary',
         prompt: 'summarize',
         outputFormat: 'json',
@@ -215,7 +222,7 @@ describe('DefaultAIRouter', () => {
 
     it('throws when no provider is available for the task type', async () => {
       await expect(
-        router.task({ type: 'code', prompt: 'test' })
+        router.task({ callerId: 'test-caller', type: 'code', prompt: 'test' })
       ).rejects.toThrow('[AIRouter] No provider could handle task type: code')
     })
   })
@@ -263,8 +270,8 @@ describe('DefaultAIRouter', () => {
       const model = makeModel('claude-3', 'anthropic')
       router.registerAdapter(makeAdapter('anthropic', [model]))
 
-      await router.complete({ messages: [{ role: 'user', content: 'a' }] })
-      await router.complete({ messages: [{ role: 'user', content: 'b' }] })
+      await router.complete({ callerId: 'test-caller', messages: [{ role: 'user', content: 'a' }] })
+      await router.complete({ callerId: 'test-caller', messages: [{ role: 'user', content: 'b' }] })
 
       const s = await router.stats()
       expect(s.totalRequests).toBe(2)
@@ -285,6 +292,7 @@ describe('DefaultAIRouter', () => {
       await router.setDefaultStrategy('cost')
 
       const response = await router.complete({
+        callerId: 'test-caller',
         messages: [{ role: 'user', content: 'test' }],
       })
 
@@ -301,6 +309,7 @@ describe('DefaultAIRouter', () => {
       await router.setDefaultStrategy('quality')
 
       const response = await router.complete({
+        callerId: 'test',
         messages: [{ role: 'user', content: 'test' }],
       })
 

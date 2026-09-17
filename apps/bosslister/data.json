@@ -1,0 +1,9 @@
+{
+  "products": [
+    {
+      "id": "restored",
+      "name": "Restored Item",
+      "status": "for_sale"
+    }
+  ]
+}

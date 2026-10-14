@@ -88,17 +88,23 @@ class MissionBoardAdapter:
     def health(self) -> bool:
         return self._request("GET", ORDERS_ROUTE)["http_status"] == 200
 
-    def post_order(self, title: str, description: str = "", created_by: str = "empire-os") -> Dict[str, Any]:
-        return self._result(self._job_id("post"), "post_order", self._request(
-            "POST", ORDERS_ROUTE, {"title": title, "description": description, "created_by": created_by}))
+    def post_order(self, title: str, description: str = "", created_by: str = "empire-os",
+                   requires_verification: bool = False) -> Dict[str, Any]:
+        body: Dict[str, Any] = {"title": title, "description": description, "created_by": created_by}
+        if requires_verification:
+            body["requires_verification"] = True
+        return self._result(self._job_id("post"), "post_order", self._request("POST", ORDERS_ROUTE, body))
 
     def claim(self, order_id: str, agent: str) -> Dict[str, Any]:
         return self._result(self._job_id("claim"), "claim", self._request(
             "POST", f"{ORDERS_ROUTE}/{order_id}/claim", {"agent": agent}))
 
-    def post_proof(self, order_id: str, agent: str, proof: str) -> Dict[str, Any]:
+    def post_proof(self, order_id: str, agent: str, proof: str, verification: Optional[str] = None) -> Dict[str, Any]:
+        body: Dict[str, Any] = {"agent": agent, "proof": proof}
+        if verification is not None:
+            body["verification"] = verification
         return self._result(self._job_id("proof"), "post_proof", self._request(
-            "POST", f"{ORDERS_ROUTE}/{order_id}/proof", {"agent": agent, "proof": proof}))
+            "POST", f"{ORDERS_ROUTE}/{order_id}/proof", body))
 
     def get_order(self, order_id: str) -> Dict[str, Any]:
         return self._result(self._job_id("get"), "get_order", self._request("GET", f"{ORDERS_ROUTE}/{order_id}"))

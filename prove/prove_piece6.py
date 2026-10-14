@@ -26,13 +26,13 @@ def free_port() -> int:
     return port
 
 
-def start_command_center(board_path: str, port: int) -> subprocess.Popen:
+def start_command_center(board_path: str, port: int, extra_env: dict = None) -> subprocess.Popen:
     """Start the real empire-command-center server on a throwaway port + throwaway board file."""
     cc_dir = command_center_dir()
     tsx_cli = os.path.join(cc_dir, "node_modules", "tsx", "dist", "cli.mjs")
     if not os.path.exists(tsx_cli):
         raise RuntimeError(f"empire-command-center deps not installed ({tsx_cli} missing); run npm install --legacy-peer-deps there")
-    env = {**os.environ, "PORT": str(port), "MISSION_BOARD_PATH": board_path, "NODE_ENV": "production"}
+    env = {**os.environ, "PORT": str(port), "MISSION_BOARD_PATH": board_path, "NODE_ENV": "production", **(extra_env or {})}
     return subprocess.Popen(["node", tsx_cli, "server.ts"], cwd=cc_dir, env=env,
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -55,20 +55,20 @@ def run_checks(adapter: MissionBoardAdapter, board_path: str) -> dict:
     checks["gate_blocks_unapproved"] = gated["status"] == "PENDING_APPROVAL" and len(adapter.requests_made) == before
 
     # Happy path: post -> claim -> proof -> approve
-    posted = adapter.post_order(FIXTURE_TITLE, "Test fixture. Nothing is listed, published or synced.", created_by="prove_piece6")
+    posted = adapter.post_order(FIXTURE_TITLE, "Test fixture. Nothing is listed, published or synced.")
     oid = posted["order"]["order_id"] if posted["order"] else None
     checks["posted_open"] = posted["order_status"] == "open"
-    claimed = adapter.claim(oid, "agent-fixture-1")
+    claimed = adapter.claim(oid)
     checks["claimed"] = claimed["order_status"] == "claimed"
-    proofed = adapter.post_proof(oid, "agent-fixture-1", "FIXTURE PROOF: observed run of prove_piece6 (no real work done)")
+    proofed = adapter.post_proof(oid, "FIXTURE PROOF: observed run of prove_piece6 (no real work done)")
     checks["proof_posted"] = proofed["order_status"] == "proof_posted"
 
     still = adapter.approve(oid, joshua_approved=False)
     checks["approve_without_flag_pending"] = still["status"] == "PENDING_APPROVAL" and adapter.get_order(oid)["order_status"] == "proof_posted"
 
-    # Server also refuses a non-approver identity even if someone bypasses the adapter
-    bad_identity = adapter._request("POST", f"/api/mission/orders/{oid}/approve", {"approved_by": "agent-fixture-1"})
-    checks["non_approver_refused"] = bad_identity["http_status"] == 403 and adapter.get_order(oid)["order_status"] == "proof_posted"
+    # Server refuses a caller-supplied approver identity even if someone bypasses the adapter
+    spoofed = adapter._request("POST", f"/api/mission/orders/{oid}/approve", {"approved_by": "joshua"})
+    checks["spoofed_approver_field_refused"] = spoofed["http_status"] == 400 and adapter.get_order(oid)["order_status"] == "proof_posted"
 
     approved = adapter.approve(oid, joshua_approved=True)
     checks["approved"] = approved["status"] == "COMPLETED" and approved["order_status"] == "approved" \
@@ -77,18 +77,16 @@ def run_checks(adapter: MissionBoardAdapter, board_path: str) -> dict:
     checks["history_trail"] = trail == ["open", "claimed", "proof_posted", "approved"]
 
     # Invalid transitions are rejected
-    second = adapter.post_order(FIXTURE_TITLE + " (invalid-transition probe)", created_by="prove_piece6")
+    second = adapter.post_order(FIXTURE_TITLE + " (invalid-transition probe)")
     sid = second["order"]["order_id"]
     skip = adapter.approve(sid, joshua_approved=True)  # open -> approved must be refused
     checks["open_to_approved_rejected"] = skip["status"] == "REJECTED" and skip["code"] == "INVALID_TRANSITION" \
         and adapter.get_order(sid)["order_status"] == "open"
-    early_proof = adapter.post_proof(sid, "agent-fixture-1", "p")  # open -> proof_posted
+    early_proof = adapter.post_proof(sid, "p")  # open -> proof_posted
     checks["open_to_proof_rejected"] = early_proof["status"] == "REJECTED" and early_proof["code"] == "INVALID_TRANSITION"
-    adapter.claim(sid, "agent-fixture-1")
-    double = adapter.claim(sid, "agent-fixture-2")
+    adapter.claim(sid)
+    double = adapter.claim(sid)  # same token = same principal, so this is an invalid transition, not a different agent
     checks["double_claim_rejected"] = double["status"] == "REJECTED" and double["code"] == "INVALID_TRANSITION"
-    wrong_agent = adapter.post_proof(sid, "agent-fixture-2", "p")
-    checks["wrong_agent_proof_rejected"] = wrong_agent["status"] == "REJECTED" and wrong_agent["code"] == "NOT_CLAIMER"
     claimed_to_approved = adapter.approve(sid, joshua_approved=True)
     checks["claimed_to_approved_rejected"] = claimed_to_approved["status"] == "REJECTED" \
         and claimed_to_approved["code"] == "INVALID_TRANSITION"

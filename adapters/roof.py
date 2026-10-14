@@ -94,7 +94,6 @@ class EmpireRoof:
         ]
 
         for factory, title, runner in runners:
-            agent = f"{factory.lower()}-agent"
             order = self.board.post_order(f"[{run_id}] {factory}: {title}", description="Roof end-to-end run")
             order_id = (order.get("order") or {}).get("order_id")
             step: Dict[str, Any] = {"factory": factory, "order_id": order_id, "board_ok": order["status"] == "COMPLETED"}
@@ -104,7 +103,7 @@ class EmpireRoof:
                 self._record(factory, "post_order", False, step)
                 continue
 
-            claim = self.board.claim(order_id, agent)
+            claim = self.board.claim(order_id)
             try:
                 result = runner() if claim["status"] == "COMPLETED" else {"ok": False, "proof": "claim failed", "error": claim.get("error")}
             except Exception as exc:  # a factory crash must not stop the other factories
@@ -112,7 +111,7 @@ class EmpireRoof:
                 result = {"ok": False, "proof": f"CRASHED: {exc}", "error": str(exc)}
 
             proof_text = (result["proof"] if result["ok"] else f"FAILED: {result.get('error') or result['proof']}")[:900]
-            proof = self.board.post_proof(order_id, agent, proof_text) if claim["status"] == "COMPLETED" else None
+            proof = self.board.post_proof(order_id, proof_text) if claim["status"] == "COMPLETED" else None
             approval = self.board.approve(order_id, joshua_approved=joshua_approved) if proof and proof["status"] == "COMPLETED" else None
             self._record(factory, "roof_run", result["ok"], result)
 

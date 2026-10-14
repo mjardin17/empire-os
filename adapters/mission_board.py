@@ -14,7 +14,6 @@ DEFAULT_PORT = 3000  # empire-command-center default
 ALLOWED_HOSTS = {"localhost", "127.0.0.1"}
 FORBIDDEN_PORTS = {3001, 3002}  # 3001 = BossListers dev server, 3002 = off limits
 HTTP_TIMEOUT_SEC = 15
-APPROVER_IDENTITY = "joshua"
 ORDERS_ROUTE = "/api/mission/orders"
 FACTORY = "MISSION_BOARD"
 
@@ -27,12 +26,14 @@ class MissionBoardAdapter:
     any queue state of its own.
 
     Order lifecycle (enforced server-side): open -> claimed -> proof_posted -> approved.
+    Write routes require a bearer token (MISSION_BOARD_TOKEN). The server takes the acting identity from
+    that token's principal, so this adapter never sends created_by, agent or approved_by.
+    Verification is only sent as signed AI Orchestra evidence (never as a bare flag).
     Approval is the only gated step: it goes through the approval gate and is only
-    sent, as approved_by="joshua", when the gate returns LIVE (joshua_approved=True).
-    Without that flag NO request is sent and the order stays at proof_posted.
+    sent when the gate returns LIVE (joshua_approved=True). Without that flag NO request is sent.
     """
 
-    def __init__(self, base_url: str = f"http://localhost:{DEFAULT_PORT}"):
+    def __init__(self, base_url: str = f"http://localhost:{DEFAULT_PORT}", token: Optional[str] = None):
         parsed = urlparse(base_url)
         if parsed.hostname not in ALLOWED_HOSTS or parsed.port is None or parsed.port in FORBIDDEN_PORTS:
             raise ValueError(
@@ -40,15 +41,16 @@ class MissionBoardAdapter:
                 f"{sorted(FORBIDDEN_PORTS)}, got {base_url}"
             )
         self.base_url = base_url.rstrip("/")
+        self.token = token if token is not None else os.environ.get("MISSION_BOARD_TOKEN", "")
         self.requests_made: List[str] = []
 
     def _request(self, method: str, path: str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         self.requests_made.append(f"{method} {path}")
         data = json.dumps(body).encode("utf-8") if body is not None else None
-        req = urllib.request.Request(
-            f"{self.base_url}{path}", data=data, method=method,
-            headers={"Content-Type": "application/json"} if data else {},
-        )
+        headers = {"Content-Type": "application/json"} if data else {}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        req = urllib.request.Request(f"{self.base_url}{path}", data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
                 return {"http_status": resp.status, "body": json.loads(resp.read().decode("utf-8") or "{}")}
@@ -88,21 +90,21 @@ class MissionBoardAdapter:
     def health(self) -> bool:
         return self._request("GET", ORDERS_ROUTE)["http_status"] == 200
 
-    def post_order(self, title: str, description: str = "", created_by: str = "empire-os",
-                   requires_verification: bool = False) -> Dict[str, Any]:
-        body: Dict[str, Any] = {"title": title, "description": description, "created_by": created_by}
+    def post_order(self, title: str, description: str = "", requires_verification: bool = False) -> Dict[str, Any]:
+        body: Dict[str, Any] = {"title": title, "description": description}
         if requires_verification:
             body["requires_verification"] = True
         return self._result(self._job_id("post"), "post_order", self._request("POST", ORDERS_ROUTE, body))
 
-    def claim(self, order_id: str, agent: str) -> Dict[str, Any]:
+    def claim(self, order_id: str) -> Dict[str, Any]:
         return self._result(self._job_id("claim"), "claim", self._request(
-            "POST", f"{ORDERS_ROUTE}/{order_id}/claim", {"agent": agent}))
+            "POST", f"{ORDERS_ROUTE}/{order_id}/claim", {}))
 
-    def post_proof(self, order_id: str, agent: str, proof: str, verification: Optional[str] = None) -> Dict[str, Any]:
-        body: Dict[str, Any] = {"agent": agent, "proof": proof}
-        if verification is not None:
-            body["verification"] = verification
+    def post_proof(self, order_id: str, proof: str, evidence: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """evidence is the AI Orchestra attestation object (see orchestra_dispatch.evidence_from_receipt) or None."""
+        body: Dict[str, Any] = {"proof": proof}
+        if evidence is not None:
+            body["evidence"] = evidence
         return self._result(self._job_id("proof"), "post_proof", self._request(
             "POST", f"{ORDERS_ROUTE}/{order_id}/proof", body))
 
@@ -122,7 +124,7 @@ class MissionBoardAdapter:
                     "gate_mode": gate["mode"], "http_status": None, "code": None,
                     "error": reason, "order": None, "order_status": None}
         result = self._result(job_id, "approve", self._request(
-            "POST", f"{ORDERS_ROUTE}/{order_id}/approve", {"approved_by": APPROVER_IDENTITY}))
+            "POST", f"{ORDERS_ROUTE}/{order_id}/approve", {}))
         return {**result, "gate_mode": gate["mode"]}
 
 

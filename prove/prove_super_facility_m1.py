@@ -6,6 +6,7 @@ Everything runs on throwaway ports, a throwaway board file and a throwaway Orche
 """
 import json
 import os
+import secrets
 import shutil
 import socket
 import subprocess
@@ -29,6 +30,7 @@ ORCHESTRA_DIR = os.environ.get("AI_ORCHESTRA_DIR", os.path.join(
 START_TIMEOUT_SEC = 60
 
 FIX_TASK = {"id": "m1-fix", "title": "Fix average()", "fixture": "buggy_calc", "permissions": "write", "timeout_s": 240,
+            "allowed_paths": ["calc.py"],
             "prompt": "calc.py has a bug: average() returns the wrong mean. Read check_calc.py and calc.py, then fix calc.py.",
             "verify": ["python", "-m", "pytest", "check_calc.py"]}
 IDLE_TASK = {**FIX_TASK, "id": "m1-idle", "title": "Idle (expected verification failure)",
@@ -38,9 +40,11 @@ READ_TASK = {"id": "m1-read", "title": "Count lines", "fixture": "readonly_probe
              "verify": ["python", "-m", "pytest", "check_noop.py"]}
 
 
-def start_orchestra(port: int, workdir: str, receipts: str) -> subprocess.Popen:
+def start_orchestra(port: int, workdir: str, receipts: str, workspaces: str, token: str, grant_secret: str) -> subprocess.Popen:
     backend = os.path.join(ORCHESTRA_DIR, "backend")
-    env = {**os.environ, "PYTHONPATH": backend, "FACILITY_RECEIPT_DIR": receipts, "PYTHONDONTWRITEBYTECODE": "1"}
+    env = {**os.environ, "PYTHONPATH": backend, "FACILITY_RECEIPT_DIR": receipts, "FACILITY_WORKSPACE_ROOT": workspaces,
+           "FACILITY_API_TOKEN": token, "FACILITY_GRANT_SECRET": grant_secret,
+           "FACILITY_ENABLE_PROVIDER_EXEC": "1", "FACILITY_ENABLE_WRITE_EXEC": "1", "PYTHONDONTWRITEBYTECODE": "1"}
     return subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--port", str(port), "--log-level", "warning"],
                             cwd=workdir, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
@@ -58,6 +62,7 @@ def orchestra_up(port: int) -> bool:
 
 
 def raw_approve(board_url: str, order_id: str, approver: str):
+    """Returns (http_status, body). Used to prove the SERVER refuses approvals the adapter would never send."""
     req = urllib.request.Request(f"{board_url}/api/mission/orders/{order_id}/approve", method="POST",
                                  data=json.dumps({"approved_by": approver}).encode(), headers={"Content-Type": "application/json"})
     try:
@@ -84,6 +89,11 @@ def main():
     tmp = tempfile.mkdtemp(prefix="facility_m1_")
     board_path, receipts, odir = os.path.join(tmp, "MISSION_BOARD.json"), os.path.join(tmp, "receipts"), os.path.join(tmp, "orchestra")
     os.makedirs(odir)
+    workspaces = os.path.join(tmp, "workspaces")
+    os.makedirs(workspaces)
+    # Per-run random secrets, passed only through the environment (never printed or written to disk).
+    token, grant_secret = secrets.token_hex(24), secrets.token_hex(24)
+    os.environ["FACILITY_API_TOKEN"], os.environ["FACILITY_GRANT_SECRET"] = token, grant_secret
     with open(board_path, "w", encoding="utf-8") as f:
         json.dump({"version": "1.0.0", "last_updated": "2026-01-01T00:00:00Z", "jobs": []}, f)
 
@@ -92,7 +102,7 @@ def main():
     try:
         bport, oport = free_port(), free_port()
         board_proc = start_command_center(board_path, bport)
-        orch_proc = start_orchestra(oport, odir, receipts)
+        orch_proc = start_orchestra(oport, odir, receipts, workspaces, token, grant_secret)
         board = MissionBoardAdapter(f"http://localhost:{bport}")
         checks["mission_board_healthy"] = wait_healthy(board)
         checks["orchestra_healthy"] = orchestra_up(oport)
@@ -113,10 +123,20 @@ def main():
         checks["fix_only_calc_py_changed"] = (rc.get("diff") or {}).get("changed") == ["calc.py"]
         checks["fix_order_at_proof_posted"] = fix.get("order_status") == "proof_posted" and fix.get("approval") == "PENDING_APPROVAL"
 
+        # Missing/forged credentials are refused before anything is posted.
+        n = len(board.requests_made)
+        saved = os.environ.pop("FACILITY_API_TOKEN")
+        no_token = disp.dispatch(READ_TASK)
+        os.environ["FACILITY_API_TOKEN"] = saved
+        checks["missing_token_refused_before_posting"] = no_token["status"] == "REJECTED" and len(board.requests_made) == n
+
         # 2. Failure path: nothing fixed -> verification_failed -> pending, unverified candidate lesson.
         idle = disp.dispatch(IDLE_TASK, allow_write=True)
         ic = idle.get("receipt") or {}
         checks["idle_fails_verification"] = idle["status"] == "FAILED" and ic.get("status") == "verification_failed"
+        checks["idle_order_stays_proof_posted"] = idle.get("order_status") == "proof_posted" and idle.get("approval") is None
+        code, body = raw_approve(f"http://localhost:{bport}", idle["order_id"], "joshua")
+        checks["raw_approve_of_failed_order_is_409"] = code == 409 and body.get("code") == "VERIFICATION_REQUIRED"
         checks["candidate_lesson_pending_unverified"] = len(ic.get("candidate_lessons", [])) == 1 and ic["candidate_lessons"][0]["verified"] == 0
         with urllib.request.urlopen(f"http://localhost:{oport}/api/lessons") as r:
             ledger = json.loads(r.read())
@@ -130,7 +150,7 @@ def main():
         # Approval: server rejects a blank approver; only Joshua's explicit approval reaches `approved`.
         code, _ = raw_approve(f"http://localhost:{bport}", fix["order_id"], "")
         checks["blank_approver_rejected_by_board"] = code in (400, 403)
-        approved = board.approve(fix["order_id"], joshua_approved=True)
+        approved = board.approve(fix["order_id"], joshua_approved=True)  # fix order is verified, so this is allowed
         checks["joshua_approval_reaches_approved"] = approved.get("order_status") == "approved"
         checks["failed_order_not_approved"] = board.get_order(idle["order_id"])["order_status"] == "proof_posted"
 

@@ -16,7 +16,6 @@ from adapters.mission_board import MissionBoardAdapter
 from adapters.learn_loop import LearnLoopAdapter
 
 FACTORY = "ORCHESTRA_DISPATCH"
-AGENT = "orchestra-agent"
 ALLOWED_HOSTS = {"localhost", "127.0.0.1"}
 FORBIDDEN_PORTS = {3001, 3002}
 PERMISSIONS = ("read_only", "write")
@@ -63,12 +62,39 @@ def validate_task(task: Any) -> Optional[str]:
     return None
 
 
+# Write-task verification runs agent-written code inside the verifier as the same user, so its result can be forged
+# by that code. Only pristine-code-only runs can count as verification for the approval gate.
+ACCEPTED_VERIFICATION_TRUST = "pristine_code_only"
+
+
 def verified_receipt(receipt: Any) -> bool:
-    """Verification = Orchestra's own acceptance run passed: status 'verified' AND verify.report_ok is true."""
+    """Verification = Orchestra's acceptance run passed (status 'verified', verify.report_ok true) AND the run
+    executed no agent-written code as this user (verification_trust 'pristine_code_only')."""
     if not isinstance(receipt, dict) or receipt.get("status") != "verified":
         return False
     verify = receipt.get("verify")
-    return isinstance(verify, dict) and verify.get("report_ok") is True
+    if not (isinstance(verify, dict) and verify.get("report_ok") is True):
+        return False
+    return receipt.get("verification_trust") == ACCEPTED_VERIFICATION_TRUST
+
+
+def _rejection_reason(receipt: Any) -> str:
+    if not isinstance(receipt, dict):
+        return "malformed or missing receipt"
+    if receipt.get("status") == "verified" and receipt.get("verification_trust") != ACCEPTED_VERIFICATION_TRUST:
+        return f"verification_trust={receipt.get('verification_trust')} is not accepted for approval"
+    return f"receipt status={receipt.get('status')}"
+
+
+def evidence_from_receipt(receipt: Any) -> Optional[Dict[str, Any]]:
+    """The signed claims AI Orchestra attached to the receipt, in the shape the Mission Board validates.
+    None when the receipt carries no attestation (e.g. the orchestra has no evidence secret configured)."""
+    if not isinstance(receipt, dict) or not isinstance(receipt.get("attestation"), str):
+        return None
+    verify = receipt.get("verify") if isinstance(receipt.get("verify"), dict) else {}
+    return {"run_id": receipt.get("run_id"), "task_id": receipt.get("task_id"), "status": receipt.get("status"),
+            "report_ok": verify.get("report_ok") is True, "verification_trust": receipt.get("verification_trust"),
+            "attestation": receipt["attestation"]}
 
 
 class OrchestraDispatchAdapter:
@@ -114,7 +140,7 @@ class OrchestraDispatchAdapter:
         diff = receipt.get("diff") if isinstance(receipt.get("diff"), dict) else {}
         lessons = receipt.get("candidate_lessons") if isinstance(receipt.get("candidate_lessons"), list) else []
         parts = [f"status={receipt.get('status')}", f"model={receipt.get('model')}", f"perm={receipt.get('permissions')}",
-                 f"verify_exit={v.get('exit_code')}", f"report_ok={v.get('report_ok')}",
+                 f"trust={receipt.get('verification_trust')}", f"verify_exit={v.get('exit_code')}", f"report_ok={v.get('report_ok')}",
                  f"changed={','.join(str(c) for c in diff.get('changed', []) or []) or '-'}",
                  f"candidate_lessons={','.join(str(c.get('id')) for c in lessons if isinstance(c, dict)) or '-'}",
                  f"run_id={receipt.get('run_id')}"]
@@ -149,17 +175,20 @@ class OrchestraDispatchAdapter:
         order_id = (order.get("order") or {}).get("order_id")
         if not order_id:
             return self._finish(job_id, "FAILED", f"could not post order: {order.get('error')}", None, None, None, task)
-        claim = self.board.claim(order_id, AGENT)
+        claim = self.board.claim(order_id)
         if claim["status"] != "COMPLETED":
             return self._finish(job_id, "FAILED", f"claim failed: {claim.get('error')}", order_id, None, None, task)
 
         res = self._call_orchestra(task, headers)
         receipt = res.get("receipt")
         verified = res.get("ok") is True and verified_receipt(receipt)
-        error = None if verified else (res.get("error") or
-                                       (f"receipt status={receipt.get('status')}" if isinstance(receipt, dict) else "malformed or missing receipt"))
-        proof = self.board.post_proof(order_id, AGENT, self._proof(receipt, verified, error),
-                                      verification="verified" if verified else "failed")
+        error = None if verified else (res.get("error") or _rejection_reason(receipt))
+        # Evidence is attached only for a verified run. Otherwise the proof is recorded without evidence and the
+        # order can never be approved (the server requires validated evidence for verification-required orders).
+        evidence = evidence_from_receipt(receipt) if verified else None
+        if verified and evidence is None:
+            verified, error = False, "receipt carries no AI Orchestra attestation; cannot verify"
+        proof = self.board.post_proof(order_id, self._proof(receipt, verified, error), evidence)
         approval = None
         if proof["status"] != "COMPLETED":
             verified, error = False, error or f"proof post failed: {proof.get('error')}"

@@ -2,8 +2,11 @@
 Approval must fail closed. Runs the REAL mission board server (node + tsx) against a stub AI Orchestra.
 Tests that need the server are skipped (not faked) when node/tsx are unavailable.
 """
+import hashlib
+import hmac
 import importlib.util
 import json
+import uuid
 import os
 import shutil
 import tempfile
@@ -24,6 +27,9 @@ FACILITY_AUTH_PATH = os.environ.get("FACILITY_AUTH_PATH", os.path.join(
     "ai-orchestra", "backend", "app", "facility_auth.py"))
 TOKEN = "t" * 24
 GRANT_SECRET = "g" * 24
+# Board token: the empire-os side acts as Joshua's principal only after the approval gate has passed.
+BOARD_TOKEN = "board-token-0123456789abcdefghij"
+EVIDENCE_SECRET = "evidence-secret-0123456789abcdefghij"
 
 WRITE_TASK = {"id": "t-write", "title": "Fix it", "fixture": "buggy_calc", "permissions": "write", "timeout_s": 30,
               "allowed_paths": ["calc.py"], "prompt": "fix calc.py", "verify": ["python", "-m", "pytest", "check_calc.py"]}
@@ -31,10 +37,29 @@ READ_TASK = {"id": "t-read", "title": "Read it", "fixture": "readonly_probe", "p
              "prompt": "read", "verify": ["python", "-m", "pytest", "check_noop.py"]}
 
 
-def receipt(status="verified", report_ok=True, exit_code=0):
-    return {"status": status, "model": "stub", "permissions": "write", "run_id": "run_abc123",
-            "verify": {"exit_code": exit_code, "report": "stub", "report_ok": report_ok},
-            "diff": {"changed": ["calc.py"], "added": [], "removed": []}, "candidate_lessons": []}
+def sign_claims(r, secret=EVIDENCE_SECRET):
+    """Same canonical message as ai-orchestra backend/app/facility_attestation.py."""
+    report_ok = "true" if (r.get("verify") or {}).get("report_ok") is True else "false"
+    msg = "|".join(["v1", str(r.get("run_id")), str(r.get("task_id")), str(r.get("status")), report_ok,
+                    str(r.get("verification_trust"))])
+    return hmac.new(secret.encode(), msg.encode(), hashlib.sha256).hexdigest()
+
+
+def receipt(status="verified", report_ok=True, exit_code=0, trust="pristine_code_only", attested=True, secret=EVIDENCE_SECRET):
+    """A read-only task's receipt by default: pristine trust, signed with the evidence secret."""
+    # Fresh run_id per receipt: the board refuses to reuse one run's evidence for a second order (replay guard).
+    r = {"status": status, "model": "stub", "permissions": "read_only", "run_id": f"run_{uuid.uuid4().hex[:12]}", "task_id": "t-read",
+         "verification_trust": trust,
+         "verify": {"exit_code": exit_code, "report": "stub", "report_ok": report_ok},
+         "diff": {"changed": [], "added": [], "removed": []}, "candidate_lessons": []}
+    if attested:
+        r["attestation"] = sign_claims(r, secret)
+    return r
+
+
+def write_receipt(trust="agent_code_executed_same_user"):
+    return {**receipt(trust=trust), "permissions": "write", "task_id": "t-write",
+            "diff": {"changed": ["calc.py"], "added": [], "removed": []}, "attestation": None}
 
 
 class Stub:
@@ -72,6 +97,7 @@ class Stub:
 def secrets(monkeypatch):
     monkeypatch.setenv("FACILITY_API_TOKEN", TOKEN)
     monkeypatch.setenv("FACILITY_GRANT_SECRET", GRANT_SECRET)
+    monkeypatch.setenv("MISSION_BOARD_TOKEN", BOARD_TOKEN)
 
 
 @pytest.fixture(scope="module")
@@ -84,7 +110,10 @@ def board_url():
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"version": "1.0.0", "last_updated": "2026-01-01T00:00:00Z", "jobs": []}, f)
     port = free_port()
-    proc = start_command_center(path, port)
+    proc = start_command_center(path, port, extra_env={
+        "MISSION_TOKENS": json.dumps({BOARD_TOKEN: "joshua"}),
+        "ORCHESTRA_EVIDENCE_SECRET": EVIDENCE_SECRET,
+    })
     url = f"http://localhost:{port}"
     try:
         if not wait_healthy(MissionBoardAdapter(url)):
@@ -112,9 +141,9 @@ def disp(board_url, stub, tmp_path):
                                     f"http://localhost:{stub.port}")
 
 
-def raw_approve(board_url, order_id, approver="joshua"):
+def raw_approve(board_url, order_id):
     req = urllib.request.Request(f"{board_url}/api/mission/orders/{order_id}/approve", method="POST",
-                                 data=json.dumps({"approved_by": approver}).encode(), headers={"Content-Type": "application/json"})
+                                 data=b"{}", headers={"Content-Type": "application/json", "Authorization": f"Bearer {BOARD_TOKEN}"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.status, json.loads(r.read())
@@ -198,8 +227,8 @@ def test_unverified_receipt_never_approved(disp, stub, board_url, status):
     assert out["order_status"] == "proof_posted"
     assert never_approved(disp)
     order = order_of(disp, out)
-    assert order["proof"].startswith("NOT VERIFIED:") and "run_abc123" in order["proof"]
-    assert order["verification_status"] == "failed" and order["requires_verification"] is True
+    assert order["proof"].startswith("NOT VERIFIED:") and "run_id=run_" in order["proof"]
+    assert order["verification_status"] is None and order["requires_verification"] is True
     code, body = raw_approve(board_url, out["order_id"])
     assert code == 409 and body.get("code") == "VERIFICATION_REQUIRED"
     assert disp.board.get_order(out["order_id"])["order_status"] == "proof_posted"
@@ -241,7 +270,7 @@ def test_orchestra_unreachable_not_verified(board_url, tmp_path):
 # ---- verified paths -----------------------------------------------------------------------------
 
 def test_verified_without_joshua_is_pending(disp, stub):
-    out = disp.dispatch(WRITE_TASK, allow_write=True, joshua_approved=False)
+    out = disp.dispatch(READ_TASK, allow_write=False, joshua_approved=False)
     assert out["status"] == "COMPLETED" and out["approval"] == "PENDING_APPROVAL"
     assert out["order_status"] == "proof_posted" and never_approved(disp)
     order = order_of(disp, out)
@@ -249,16 +278,57 @@ def test_verified_without_joshua_is_pending(disp, stub):
 
 
 def test_verified_with_joshua_reaches_approved(disp, stub):
-    out = disp.dispatch(WRITE_TASK, allow_write=True, joshua_approved=True)
+    out = disp.dispatch(READ_TASK, allow_write=False, joshua_approved=True)
     assert out["status"] == "COMPLETED" and out["order_status"] == "approved"
+    assert order_of(disp, out)["approved_by"] == "joshua"
     assert any("/approve" in r for r in disp.board.requests_made)
+
+
+# ---- trust gap: same-user write-task receipts must never satisfy the proof-required gate ---------------
+
+def test_same_user_write_receipt_is_refused_even_when_signed_and_joshua_approves(disp, stub, board_url):
+    stub.reply = write_receipt()
+    out = disp.dispatch(WRITE_TASK, allow_write=True, joshua_approved=True)
+    assert out["status"] == "FAILED" and out["order_status"] == "proof_posted" and never_approved(disp)
+    order = order_of(disp, out)
+    assert order["proof"].startswith("NOT VERIFIED:") and "agent_code_executed_same_user" in order["proof"]
+    assert order["verification_status"] is None and order["verification_run_id"] is None
+    code, body = raw_approve(board_url, out["order_id"])
+    assert code == 409 and body.get("code") == "VERIFICATION_REQUIRED"
+
+
+def test_forged_verified_claim_without_attestation_is_refused(disp, stub, board_url):
+    stub.reply = receipt(attested=False)
+    out = disp.dispatch(READ_TASK, allow_write=False, joshua_approved=True)
+    assert out["status"] == "FAILED" and never_approved(disp)
+    assert "no AI Orchestra attestation" in out["error"]
+    assert order_of(disp, out)["proof"].startswith("NOT VERIFIED:")
+    assert raw_approve(board_url, out["order_id"])[0] == 409
+
+
+def test_attestation_signed_with_wrong_secret_is_refused(disp, stub, board_url):
+    stub.reply = receipt(secret="attacker-secret-0123456789abcdefghij")
+    out = disp.dispatch(READ_TASK, allow_write=False, joshua_approved=True)
+    assert out["status"] == "FAILED" and never_approved(disp)
+    assert raw_approve(board_url, out["order_id"])[0] == 409
+
+
+def test_forged_verification_flag_cannot_be_sent_to_the_board(disp, stub):
+    stub.reply = receipt(status="verification_failed", report_ok=False)
+    disp.dispatch(READ_TASK, allow_write=False, joshua_approved=True)
+    posted = [r for r in disp.board.requests_made if "/proof" in r]
+    assert posted, "proof was posted"
+    # Verification travels only as signed evidence; the adapter never sends a bare "verification" field.
+    import inspect
+    from adapters.mission_board import MissionBoardAdapter as M
+    assert "verification" not in inspect.signature(M.post_proof).parameters
 
 
 def test_proof_text_has_no_local_paths(disp, stub):
     stub.reply = {**receipt(), "receipt_path": "C:\\Users\\x\\receipts\\run.json"}
     out = disp.dispatch(WRITE_TASK, allow_write=True)
     proof = order_of(disp, out)["proof"]
-    assert "C:\\" not in proof and "receipt_path" not in proof and "run_abc123" in proof
+    assert "C:\\" not in proof and "receipt_path" not in proof and "run_id=run_" in proof
 
 
 def test_read_only_task_sends_token_but_no_grant(disp, stub):

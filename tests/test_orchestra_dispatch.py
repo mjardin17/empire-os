@@ -325,8 +325,9 @@ def test_forged_verification_flag_cannot_be_sent_to_the_board(disp, stub):
 
 
 def test_proof_text_has_no_local_paths(disp, stub):
+    # The receipt is signed for the read-only task, so dispatch the same task (a write task's evidence is refused).
     stub.reply = {**receipt(), "receipt_path": "C:\\Users\\x\\receipts\\run.json"}
-    out = disp.dispatch(WRITE_TASK, allow_write=True)
+    out = disp.dispatch(READ_TASK, allow_write=False)
     proof = order_of(disp, out)["proof"]
     assert "C:\\" not in proof and "receipt_path" not in proof and "run_id=run_" in proof
 

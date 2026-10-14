@@ -171,7 +171,7 @@ class OrchestraDispatchAdapter:
 
         order = self.board.post_order(f"[{task['id']}] {task.get('title')}",
                                       description=f"permissions={task['permissions']} fixture={task.get('fixture')}",
-                                      requires_verification=True)
+                                      requires_verification=True, task_id=str(task["id"]))
         order_id = (order.get("order") or {}).get("order_id")
         if not order_id:
             return self._finish(job_id, "FAILED", f"could not post order: {order.get('error')}", None, None, None, task)

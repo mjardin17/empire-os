@@ -90,10 +90,15 @@ class MissionBoardAdapter:
     def health(self) -> bool:
         return self._request("GET", ORDERS_ROUTE)["http_status"] == 200
 
-    def post_order(self, title: str, description: str = "", requires_verification: bool = False) -> Dict[str, Any]:
+    def post_order(self, title: str, description: str = "", requires_verification: bool = False,
+                   task_id: Optional[str] = None) -> Dict[str, Any]:
         body: Dict[str, Any] = {"title": title, "description": description}
         if requires_verification:
+            # The Command Center binds verification evidence to this task_id; it refuses evidence for any other task.
+            if not task_id:
+                raise ValueError("requires_verification orders must name their task_id")
             body["requires_verification"] = True
+            body["task_id"] = task_id
         return self._result(self._job_id("post"), "post_order", self._request("POST", ORDERS_ROUTE, body))
 
     def claim(self, order_id: str) -> Dict[str, Any]:

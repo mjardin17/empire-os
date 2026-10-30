@@ -1,7 +1,8 @@
+import { EMPIRE_OS_URL } from '../config';
 import React, { useState, useEffect, useCallback } from "react";
 import { Activity, Server, Cpu, HardDrive, Zap, RefreshCw, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 
-const EMPIRE_OS = "http://localhost:3001";
+const EMPIRE_OS = EMPIRE_OS_URL;
 const POLL_MS = 6000;
 
 type ModuleHealth = { status: string; [key: string]: unknown };
@@ -208,7 +209,7 @@ export default function HealthMonitorPanel() {
       {/* Empire OS Link */}
       <div className="text-center">
         <a
-          href="http://localhost:3001/empire-dashboard/"
+          href={`${EMPIRE_OS_URL}/empire-dashboard/`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-slate-100 font-mono text-xs font-bold transition"

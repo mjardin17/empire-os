@@ -1,7 +1,8 @@
+import { EMPIRE_OS_URL } from '../config';
 import React, { useState, useEffect, useCallback } from "react";
 import { Cpu, Play, RefreshCw, Award, Clock, HardDrive, Zap } from "lucide-react";
 
-const EMPIRE_OS = "http://localhost:3001";
+const EMPIRE_OS = EMPIRE_OS_URL;
 
 type ModelEntry = {
   id: string;

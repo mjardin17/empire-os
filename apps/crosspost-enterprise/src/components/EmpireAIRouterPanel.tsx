@@ -1,7 +1,8 @@
+import { EMPIRE_OS_URL } from '../config';
 import React, { useState, useEffect, useCallback } from "react";
 import { Brain, Send, RefreshCw, Zap, Clock, DollarSign, Server } from "lucide-react";
 
-const EMPIRE_OS = "http://localhost:3001";
+const EMPIRE_OS = EMPIRE_OS_URL;
 const CROSSPOST  = ""; // relative — CrossPost's own /api/empire/ai-router
 
 type Provider = { id: string; capabilities: string[]; contextWindow?: number; costPerMToken?: number };

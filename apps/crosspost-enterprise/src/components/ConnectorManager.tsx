@@ -1,7 +1,8 @@
+import { EMPIRE_OS_URL } from '../config';
 import React, { useState, useEffect, useCallback } from "react";
 import { Plug, CheckCircle, XCircle, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
 
-const EMPIRE_OS = "http://localhost:3001";
+const EMPIRE_OS = EMPIRE_OS_URL;
 
 type ConnectorStatus = "online" | "offline" | "unknown" | "degraded";
 
@@ -158,7 +159,7 @@ export default function ConnectorManager() {
             {empireOnline ? "ONLINE" : "OFFLINE"}
           </span>
           {empireOnline && (
-            <a href="http://localhost:3001/empire-dashboard/" target="_blank" rel="noopener noreferrer"
+            <a href={`${EMPIRE_OS_URL}/empire-dashboard/`} target="_blank" rel="noopener noreferrer"
               className="text-indigo-400 hover:text-indigo-300 text-[10px] font-mono">
               Open ↗
             </a>

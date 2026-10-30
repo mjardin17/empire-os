@@ -42,3 +42,6 @@ data/
 # IDE
 .vscode/settings.json
 .idea/
+
+# generated pipeline output (renders, books, job files)
+output/

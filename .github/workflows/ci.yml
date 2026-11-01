@@ -21,6 +21,16 @@ jobs:
           node-version: 20
           cache: pnpm
 
+      - name: Generate lockfile artifact (temporary)
+        run: pnpm install --lockfile-only --no-frozen-lockfile --ignore-scripts
+
+      - name: Upload generated lockfile (temporary)
+        uses: actions/upload-artifact@v4
+        with:
+          name: regenerated-pnpm-lock
+          path: pnpm-lock.yaml
+          if-no-files-found: error
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

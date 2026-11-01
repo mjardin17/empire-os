@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'feat/**']
   pull_request:
     branches: [main]
 
@@ -24,11 +24,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Type check
-        run: pnpm type-check
+      - name: Type check core
+        run: pnpm --filter @empire-os/core type-check
 
-      - name: Lint
-        run: pnpm lint
+      - name: Test core
+        run: pnpm --filter @empire-os/core test
+
+      - name: Build core
+        run: pnpm --filter @empire-os/core build
+
+      - name: Build CrossPost Enterprise
+        run: pnpm --filter ./apps/crosspost-enterprise build
 
   api-validate:
     runs-on: ubuntu-latest

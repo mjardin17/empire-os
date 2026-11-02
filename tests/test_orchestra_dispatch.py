@@ -74,6 +74,9 @@ def secrets(monkeypatch):
     monkeypatch.setenv("FACILITY_GRANT_SECRET", GRANT_SECRET)
 
 
+OPERATOR_TOKEN = "o" * 32  # throwaway; the command center refuses every /api/mission call without it
+
+
 @pytest.fixture(scope="module")
 def board_url():
     tsx = os.path.join(command_center_dir(), "node_modules", "tsx", "dist", "cli.mjs")
@@ -83,6 +86,8 @@ def board_url():
     path = os.path.join(tmp, "MISSION_BOARD.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"version": "1.0.0", "last_updated": "2026-01-01T00:00:00Z", "jobs": []}, f)
+    previous_token = os.environ.get("EMPIRE_OPERATOR_TOKEN")
+    os.environ["EMPIRE_OPERATOR_TOKEN"] = OPERATOR_TOKEN  # the adapter and the server both read it
     port = free_port()
     proc = start_command_center(path, port)
     url = f"http://localhost:{port}"
@@ -96,6 +101,10 @@ def board_url():
             proc.wait(timeout=10)
         except Exception:
             proc.kill()
+        if previous_token is None:
+            os.environ.pop("EMPIRE_OPERATOR_TOKEN", None)
+        else:
+            os.environ["EMPIRE_OPERATOR_TOKEN"] = previous_token
         shutil.rmtree(tmp, ignore_errors=True)
 
 
@@ -114,7 +123,8 @@ def disp(board_url, stub, tmp_path):
 
 def raw_approve(board_url, order_id, approver="joshua"):
     req = urllib.request.Request(f"{board_url}/api/mission/orders/{order_id}/approve", method="POST",
-                                 data=json.dumps({"approved_by": approver}).encode(), headers={"Content-Type": "application/json"})
+                                 data=json.dumps({"approved_by": approver}).encode(),
+                                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {OPERATOR_TOKEN}"})
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             return r.status, json.loads(r.read())

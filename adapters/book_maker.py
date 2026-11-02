@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import uuid
 import time
@@ -14,6 +15,31 @@ from ebooklib import epub
 from reportlab.lib.pagesizes import inch
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, PageBreak
+
+PLACEHOLDER_WORDS = re.compile(r"\b(test|fixture|placeholder|lorem|roof proof)\b|\[", re.IGNORECASE)
+
+
+PUBLISH_CHECK_COUNT = 4  # title, description, price, cover
+
+
+def publish_blockers(title: str, description: str, price: str, has_cover: bool) -> List[str]:
+    """Reasons a book must not go to any store yet. Empty list means it passes the bar."""
+    blockers = []
+    if not title.strip() or PLACEHOLDER_WORDS.search(title):
+        blockers.append("title looks like a placeholder")
+    if not description.strip() or PLACEHOLDER_WORDS.search(description):
+        blockers.append("description is a placeholder or empty")
+    if price.strip() in ("", "$0.00", "0.00"):
+        blockers.append("price not set by Joshua")
+    if not has_cover:
+        blockers.append("no professionally done cover")
+    return blockers
+
+
+def publish_score(blockers: List[str]) -> float:
+    """Quality of a book: the share of publish checks it passes (1.0 means publish-ready)."""
+    return (PUBLISH_CHECK_COUNT - len(blockers)) / PUBLISH_CHECK_COUNT
+
 
 class BookMakerAdapter:
     """
@@ -130,6 +156,10 @@ class BookMakerAdapter:
                 "description": f"Test manuscript '{title}' formatted end-to-end for publication via StoryForge 2.",
                 "channels": ["Amazon KDP", "Apple Books", "Google Play", "Kobo", "Barnes & Noble", "IngramSpark"]
             }
+            # Publish bar (Joshua's rule): real title, real description, real price, real cover.
+            blockers = publish_blockers(title, metadata["description"], metadata["price"], has_cover=False)
+            metadata["publish_blockers"] = blockers
+            metadata["publish_ready"] = not blockers
             with open(meta_path, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
 
@@ -143,6 +173,9 @@ class BookMakerAdapter:
                 "pdf_path": str(pdf_path),
                 "metadata_path": str(meta_path),
                 "gate_mode": gate_mode,
+                "publish_ready": not blockers,
+                "publish_blockers": blockers,
+                "publish_score": publish_score(blockers),
                 "error": None
             }
 

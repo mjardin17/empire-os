@@ -1,5 +1,5 @@
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from shared.logger import logger
 from shared.approval_gate import approval_gate
@@ -10,6 +10,8 @@ from adapters.video_studio import VideoStudioAdapter
 from adapters.book_maker import BookMakerAdapter
 from adapters.merch_factory import MerchFactoryAdapter
 from adapters.bosslisters import BossListersAdapter
+from adapters.agent_scope import assert_allowed
+from adapters.agent_memory import AgentMemory
 
 FACTORY = "ROOF"
 
@@ -37,9 +39,10 @@ class EmpireRoof:
     """
 
     def __init__(self, board: MissionBoardAdapter, learn: LearnLoopAdapter,
-                 bosslisters_url: str = "http://localhost:3001"):
+                 bosslisters_url: str = "http://localhost:3001", memory: Optional[AgentMemory] = None):
         self.board = board
         self.learn = learn
+        self.memory = memory or AgentMemory()
         self.video = VideoStudioAdapter()
         self.books = BookMakerAdapter()
         self.merch = MerchFactoryAdapter()
@@ -58,8 +61,14 @@ class EmpireRoof:
     def _run_books(self) -> Dict[str, Any]:
         r = self.books.submit_job(title="Roof Proof Manual", author="Empire OS", chapters=FIXTURE_CHAPTERS)
         ok = r.get("status") == "COMPLETED"
+        blockers = r.get("publish_blockers") or []
+        if blockers:
+            self._remember("book_maker-agent", "generate_book", "; ".join(blockers),
+                           lesson="Book is not publish-ready: " + "; ".join(blockers) + ". Fix before any store upload.")
         return {"ok": ok, "gate_mode": r.get("gate_mode"), "job_id": r.get("job_id"),
-                "proof": f"{r.get('status')} epub={r.get('epub_path')} pdf={r.get('pdf_path')}",
+                "quality": r.get("publish_score"),
+                "proof": f"{r.get('status')} epub={r.get('epub_path')} pdf={r.get('pdf_path')} "
+                         f"publish_ready={r.get('publish_ready')} blockers={blockers}",
                 "error": r.get("error")}
 
     def _run_merch(self) -> Dict[str, Any]:
@@ -79,6 +88,21 @@ class EmpireRoof:
                 "proof": f"{r.get('status')} ebay dry-run published={resp.get('published')} ready_for_live={r.get('ready_for_live')}",
                 "error": r.get("error")}
 
+    # -- scope and memory --------------------------------------------------
+
+    def _run_scoped(self, agent: str, job_action: str, runner: Callable[[], Dict[str, Any]]) -> Dict[str, Any]:
+        try:
+            assert_allowed(agent, job_action)
+        except PermissionError as exc:  # outside the agent's scope: refuse, do not run
+            return {"ok": False, "proof": f"REFUSED: {exc}", "error": str(exc)}
+        return runner()
+
+    def _remember(self, agent: str, action: str, error: str, lesson: Optional[str] = None) -> None:
+        try:
+            self.memory.remember(agent, action, error, lesson or f"Failed: {error}. Check this before the next run.")
+        except Exception as exc:  # memory must never break a run
+            logger.error(f"Agent memory write failed: {exc}", factory=FACTORY)
+
     # -- orchestration ----------------------------------------------------
 
     def run(self, joshua_approved: bool = False) -> Dict[str, Any]:
@@ -87,13 +111,13 @@ class EmpireRoof:
                                       payload={"run_id": run_id}, joshua_approved=joshua_approved)
         steps: List[Dict[str, Any]] = []
         runners: List[tuple] = [
-            ("VIDEO_STUDIO", "Render a short clip", self._run_video),
-            ("BOOK_MAKER", "Build an EPUB + 6x9 PDF", self._run_books),
-            ("MERCH_FACTORY", "Scan trends and dry-run Printful products", self._run_merch),
-            ("BOSSLISTERS", "Dry-run one eBay listing", self._run_bosslisters),
+            ("VIDEO_STUDIO", "Render a short clip", "render_video", self._run_video),
+            ("BOOK_MAKER", "Build an EPUB + 6x9 PDF", "generate_book", self._run_books),
+            ("MERCH_FACTORY", "Scan trends and dry-run Printful products", "list_merch", self._run_merch),
+            ("BOSSLISTERS", "Dry-run one eBay listing", "list_on_ebay", self._run_bosslisters),
         ]
 
-        for factory, title, runner in runners:
+        for factory, title, job_action, runner in runners:
             agent = f"{factory.lower()}-agent"
             order = self.board.post_order(f"[{run_id}] {factory}: {title}", description="Roof end-to-end run")
             order_id = (order.get("order") or {}).get("order_id")
@@ -105,11 +129,14 @@ class EmpireRoof:
                 continue
 
             claim = self.board.claim(order_id, agent)
+            step["lessons_recalled"] = len(self.memory.recall(agent, job_action))
             try:
-                result = runner() if claim["status"] == "COMPLETED" else {"ok": False, "proof": "claim failed", "error": claim.get("error")}
+                result = self._run_scoped(agent, job_action, runner) if claim["status"] == "COMPLETED" else {"ok": False, "proof": "claim failed", "error": claim.get("error")}
             except Exception as exc:  # a factory crash must not stop the other factories
                 logger.error(f"{factory} crashed: {exc}", factory=FACTORY)
                 result = {"ok": False, "proof": f"CRASHED: {exc}", "error": str(exc)}
+            if not result["ok"]:
+                self._remember(agent, job_action, result.get("error") or result["proof"])
 
             proof_text = (result["proof"] if result["ok"] else f"FAILED: {result.get('error') or result['proof']}")[:900]
             proof = self.board.post_proof(order_id, agent, proof_text) if claim["status"] == "COMPLETED" else None
@@ -139,11 +166,21 @@ class EmpireRoof:
                     data={k: v for k, v in summary.items() if k not in ("steps", "learn_summary")})
         return summary
 
+    @staticmethod
+    def _outcome(ok: bool, quality: Optional[float]) -> Tuple[str, float]:
+        """Failure scores 0. A job that ran but fell short of its quality bar is 'partial' with that quality."""
+        if not ok:
+            return "failure", 0.0
+        if quality is None or quality >= 1.0:
+            return "success", 1.0
+        return "partial", quality
+
     def _record(self, factory: str, action: str, ok: bool, detail: Dict[str, Any]) -> None:
+        outcome, score = self._outcome(ok, detail.get("quality"))
         try:
             self.learn.submit_event({
                 "factory": factory, "action": action,
-                "outcome": "success" if ok else "failure", "score": 1.0 if ok else 0.0,
+                "outcome": outcome, "score": score,
                 "metadata": {"job_id": str(detail.get("job_id") or detail.get("order_id") or "")[:64],
                              "gate_mode": str(detail.get("gate_mode") or "")},
             })

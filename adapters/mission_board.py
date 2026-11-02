@@ -45,10 +45,13 @@ class MissionBoardAdapter:
     def _request(self, method: str, path: str, body: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         self.requests_made.append(f"{method} {path}")
         data = json.dumps(body).encode("utf-8") if body is not None else None
-        req = urllib.request.Request(
-            f"{self.base_url}{path}", data=data, method=method,
-            headers={"Content-Type": "application/json"} if data else {},
-        )
+        headers: Dict[str, str] = {}
+        if data:
+            headers["Content-Type"] = "application/json"
+        token = os.environ.get("EMPIRE_OPERATOR_TOKEN", "").strip()
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        req = urllib.request.Request(f"{self.base_url}{path}", data=data, method=method, headers=headers)
         try:
             with urllib.request.urlopen(req, timeout=HTTP_TIMEOUT_SEC) as resp:
                 return {"http_status": resp.status, "body": json.loads(resp.read().decode("utf-8") or "{}")}

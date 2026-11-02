@@ -1,5 +1,6 @@
 import json
 import os
+import secrets
 import shutil
 import sys
 import tempfile
@@ -12,9 +13,19 @@ from shared import logger
 from adapters.mission_board import MissionBoardAdapter
 from adapters.learn_loop import LearnLoopAdapter
 from adapters.roof import EmpireRoof
+from adapters.agent_scope import assert_allowed
+from adapters.agent_memory import AgentMemory
 from prove_piece6 import free_port, start_command_center, wait_healthy
 
 FACTORY = "ROOF"
+
+
+def _refused(call) -> bool:
+    try:
+        call()
+    except PermissionError:
+        return True
+    return False
 
 
 def bosslisters_up() -> bool:
@@ -27,6 +38,8 @@ def bosslisters_up() -> bool:
 
 def main():
     logger.info("Starting Empire OS end-to-end verification (all four factories under the roof)", factory=FACTORY)
+    # Throwaway operator token for this run only; the command center and adapter both read it from env.
+    os.environ["EMPIRE_OPERATOR_TOKEN"] = secrets.token_urlsafe(32)
     port = free_port()
     tmp = tempfile.mkdtemp(prefix="empire_e2e_")
     board_path = os.path.join(tmp, "MISSION_BOARD.json")
@@ -44,7 +57,8 @@ def main():
             raise RuntimeError(f"preconditions failed: {checks}")
 
         learn = LearnLoopAdapter(storage_dir=os.path.join(tmp, "learn"))
-        roof = EmpireRoof(board, learn)
+        memory = AgentMemory(os.path.join(tmp, "agent_memory"))
+        roof = EmpireRoof(board, learn, memory=memory)
 
         # Production behaviour: nothing approved, nothing live.
         summary = roof.run(joshua_approved=False)
@@ -55,7 +69,12 @@ def main():
         checks["approval_withheld_without_joshua"] = all(s.get("approval") == "PENDING_APPROVAL" for s in steps)
 
         events = learn.read_events()
-        checks["4_learn_events_success"] = len(events) == 4 and all(e["outcome"] == "success" for e in events)
+        by_factory = {e["factory"]: e for e in events}
+        checks["learn_scores_reflect_quality"] = (
+            len(events) == 4
+            and all(by_factory[f]["outcome"] == "success" for f in ("VIDEO_STUDIO", "MERCH_FACTORY", "BOSSLISTERS"))
+            and by_factory["BOOK_MAKER"]["outcome"] == "partial" and by_factory["BOOK_MAKER"]["score"] < 1.0
+        )
         checks["learn_summary_scores_all_factories"] = (
             sorted(summary["learn_summary"].keys()) == ["BOOK_MAKER", "BOSSLISTERS", "MERCH_FACTORY", "VIDEO_STUDIO"]
         )
@@ -63,6 +82,15 @@ def main():
         with open(board_path, "r", encoding="utf-8") as f:
             persisted = json.load(f).get("orders", [])
         checks["board_file_persisted_4_orders"] = len(persisted) == 4 and all(o["status"] == "proof_posted" for o in persisted)
+
+        # Agent scope: an agent cannot approve, and cannot run another factory's job.
+        checks["agent_cannot_approve"] = _refused(lambda: assert_allowed("book_maker-agent", "approve"))
+        checks["agent_cannot_run_other_factory_job"] = _refused(lambda: assert_allowed("book_maker-agent", "render_video"))
+        # Agent memory: the book's publish blockers were written down for the next run.
+        book_lessons = memory.recall("book_maker-agent", "generate_book")
+        checks["book_blockers_written_to_memory"] = any("placeholder" in l["lesson"] for l in book_lessons)
+        checks["book_not_publish_ready"] = all(s.get("ok") is True for s in steps if s["factory"] == "BOOK_MAKER") and \
+            "publish_ready=False" in (steps[1].get("proof") or "")
 
         # Joshua's gate: approving one order is the only way it reaches `approved`.
         approved = board.approve(steps[0]["order_id"], joshua_approved=True)

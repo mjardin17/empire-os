@@ -22,7 +22,7 @@ import type {
 import { HIGGSFIELD_PLUGIN } from './higgsfield.plugin.js'
 import { STORY_PIPELINE_WORKFLOW } from './workflows/story-pipeline.js'
 
-const STORYFORGE_URL = process.env.STORYFORGE_BASE_URL ?? 'http://localhost:8001'
+const STORYFORGE_URL = process.env.STORYFORGE_BASE_URL ?? 'http://localhost:3000'
 const MODULE_ID = 'storyforge'
 
 /** ModuleDescriptor registered with the Module Gateway */

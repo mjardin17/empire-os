@@ -1,3 +1,4 @@
+import { EMPIRE_OS_URL } from '../config';
 /**
  * DiscoveryDashboard — Phase 3 Premium Unified Dashboard
  * Shows: new AI models, trending repos, recommendations, benchmark bests, MCP servers.
@@ -190,9 +191,9 @@ async function fetchAll(): Promise<DashboardData> {
   const timeout = (ms: number) => new AbortController().signal
   // fire all in parallel, fail individually to mock
   const [discRes, benchRes, recRes] = await Promise.allSettled([
-    fetch('http://localhost:3001/discovery-engine/all', { signal: AbortSignal.timeout(6000) }),
-    fetch('http://localhost:3001/benchmark-engine/latest', { signal: AbortSignal.timeout(6000) }),
-    fetch('http://localhost:3001/self-improvement/recommendations', { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS_URL}/discovery-engine/all`, { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS_URL}/benchmark-engine/latest`, { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS_URL}/self-improvement/recommendations`, { signal: AbortSignal.timeout(6000) }),
   ])
 
   let allItems: DiscoveryItem[] = []

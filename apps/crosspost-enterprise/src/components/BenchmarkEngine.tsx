@@ -1,3 +1,4 @@
+import { EMPIRE_OS_URL } from '../config';
 /**
  * BenchmarkEngine — Phase 3 React UI
  * Recharts benchmark history + run benchmarks.
@@ -85,8 +86,8 @@ export default function BenchmarkEngine() {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 6000)
       const [mRes, hRes] = await Promise.all([
-        fetch('http://localhost:3001/benchmark-engine/models', { signal: controller.signal }),
-        fetch('http://localhost:3001/benchmark-engine/history', { signal: controller.signal }),
+        fetch(`${EMPIRE_OS_URL}/benchmark-engine/models`, { signal: controller.signal }),
+        fetch(`${EMPIRE_OS_URL}/benchmark-engine/history`, { signal: controller.signal }),
       ])
       const mData = mRes.ok ? (await mRes.json() as { models: ModelEntry[] }).models : MOCK_MODELS
       const hData = hRes.ok ? (await hRes.json() as { runs: BenchmarkRun[] }).runs : MOCK_RUNS
@@ -105,7 +106,7 @@ export default function BenchmarkEngine() {
   const runBenchmark = async (modelId: string) => {
     setRunning(modelId)
     try {
-      const res = await fetch('http://localhost:3001/benchmark-engine/run', {
+      const res = await fetch(`${EMPIRE_OS_URL}/benchmark-engine/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ modelId }),

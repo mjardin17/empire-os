@@ -1,3 +1,4 @@
+import { EMPIRE_OS_URL } from '../config';
 /**
  * DiscoveryEngine — Phase 3 React UI
  * Full discovery catalog with search, filters, quality scores, and install prompts.
@@ -91,7 +92,7 @@ export default function DiscoveryEngine() {
     try {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 6000)
-      const res = await fetch('http://localhost:3001/discovery-engine/all', { signal: controller.signal })
+      const res = await fetch(`${EMPIRE_OS_URL}/discovery-engine/all`, { signal: controller.signal })
       if (!res.ok) throw new Error('non-ok')
       const data = await res.json() as { entries: DiscoveryItem[]; lastFullScan: string }
       setItems(data.entries ?? MOCK)
@@ -108,7 +109,7 @@ export default function DiscoveryEngine() {
   const triggerScan = async () => {
     setScanning(true)
     try {
-      await fetch('http://localhost:3001/discovery-engine/scan', { method: 'POST' })
+      await fetch(`${EMPIRE_OS_URL}/discovery-engine/scan`, { method: 'POST' })
       setTimeout(() => { load(); setScanning(false) }, 5000)
     } catch {
       setScanning(false)

@@ -291,3 +291,21 @@ describe('InMemoryPluginRegistry', () => {
     })
   })
 })
+
+describe('validateDependencies() version checks', () => {
+  it('treats an installed dependency below minVersion as missing', async () => {
+    const registry = new InMemoryPluginRegistry()
+    await registry.register(makeDescriptor('dep-old', { version: '1.2.0' }))
+    await registry.register(makeDescriptor('needs-dep', { dependencies: [{ pluginId: 'dep-old', minVersion: '2.0.0', optional: false }] }))
+    const result = await registry.validateDependencies('needs-dep')
+    expect(result.valid).toBe(false)
+    expect(result.missing).toEqual(['dep-old'])
+  })
+
+  it('accepts an installed dependency at or above minVersion', async () => {
+    const registry = new InMemoryPluginRegistry()
+    await registry.register(makeDescriptor('dep-new', { version: '2.1.0' }))
+    await registry.register(makeDescriptor('uses-dep', { dependencies: [{ pluginId: 'dep-new', minVersion: '2.0.0', optional: false }] }))
+    expect((await registry.validateDependencies('uses-dep')).valid).toBe(true)
+  })
+})

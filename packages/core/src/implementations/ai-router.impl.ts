@@ -23,9 +23,9 @@ import type {
  * Use this type in server.ts instead of casting to DefaultAIRouter.
  * Kept in implementations (not frozen interfaces) because it is a runtime concern.
  */
-export interface ConfigurableAIRouter extends import('../interfaces/index.js').AIRouter {
+export interface ConfigurableAIRouter extends AIRouter {
   registerAdapter(adapter: AIProviderAdapter): void
-  setDefaultStrategy(strategy: import('../interfaces/index.js').AIRoutingStrategy): Promise<void>
+  setDefaultStrategy(strategy: AIRoutingStrategy): Promise<void>
 }
 
 // Provider adapter interface — implement one per AI provider

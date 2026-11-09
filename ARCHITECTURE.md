@@ -1,6 +1,6 @@
 # Empire OS — Architecture
 
-**Status: CORE FROZEN. Do not add features until core is stable.**
+**Status: CORE OPEN. Fix and extend on feature branches with tests; Josh reviews by pull request.**
 
 ---
 
@@ -14,7 +14,7 @@
 
 ## Six Core Services (packages/core/)
 
-All interfaces are in `packages/core/src/interfaces/`. They are frozen.
+All interfaces are in `packages/core/src/interfaces/`. They are open: changes go through branches and review.
 All implementations are in `packages/core/src/implementations/`.
 
 | Service | Interface | Implementation | Purpose |

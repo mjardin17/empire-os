@@ -16,14 +16,13 @@ function makeDescriptor(
 ): Omit<PluginDescriptor, 'registeredAt' | 'updatedAt'> {
   return {
     id,
+    description: `Plugin ${id} for tests`,
     name: `Plugin ${id}`,
     version: '1.0.0',
     type: 'module',
     status: 'active',
     capabilities: [{ name: 'default-cap', description: 'A default capability', version: '1.0.0' }],
-    endpoints: [],
     dependencies: [],
-    priority: 10,
     tags: [],
     ...overrides,
   }
@@ -77,11 +76,11 @@ describe('InMemoryPluginRegistry', () => {
   describe('update()', () => {
     it('merges updates and preserves id + registeredAt', async () => {
       await registry.register(makeDescriptor('video-pipeline'))
-      const updated = await registry.update('video-pipeline', { version: '2.0.0', priority: 50 })
+      const updated = await registry.update('video-pipeline', { version: '2.0.0', config: { priority: 50 } })
 
       expect(updated.id).toBe('video-pipeline')
       expect(updated.version).toBe('2.0.0')
-      expect(updated.priority).toBe(50)
+      expect(updated.config?.priority).toBe(50)
     })
 
     it('throws for unknown plugin', async () => {
@@ -112,7 +111,7 @@ describe('InMemoryPluginRegistry', () => {
     beforeEach(async () => {
       await registry.register(makeDescriptor('mod-a', { type: 'module', status: 'active', tags: ['render'] }))
       await registry.register(makeDescriptor('mod-b', { type: 'module', status: 'inactive', tags: ['script'] }))
-      await registry.register(makeDescriptor('plug-c', { type: 'plugin', status: 'active', tags: ['render'] }))
+      await registry.register(makeDescriptor('plug-c', { type: 'tool', status: 'active', tags: ['render'] }))
     })
 
     it('returns all plugins with no filter', async () => {

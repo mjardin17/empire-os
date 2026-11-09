@@ -100,7 +100,7 @@ The core is **stable** when ALL of the following are true:
 - [x] EventBus delivers events across a publish → subscribe cycle
 - [x] MemoryBus read/write/search/subscribe cycle passes
 - [x] AIRouter routes, falls back, and returns stats correctly
-- [ ] ModuleGateway routes to a real HTTP endpoint (mock or real module)
+- [x] ModuleGateway routes to a real HTTP endpoint (mock or real module)
 - [x] PluginRegistry validates dependencies correctly
 
 **Empire Assistant does not start until every box above is checked.**

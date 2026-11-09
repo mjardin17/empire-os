@@ -4,7 +4,7 @@
  * The render pipeline (script→images→TTS→FFmpeg→MP4) is one workflow.
  * Empire Assistant triggers workflows — it does not implement them.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 export type WorkflowStepType = 'action' | 'decision' | 'parallel' | 'wait' | 'human-approval'

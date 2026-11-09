@@ -23,9 +23,9 @@ import type {
  * Use this type in server.ts instead of casting to DefaultAIRouter.
  * Kept in implementations (not frozen interfaces) because it is a runtime concern.
  */
-export interface ConfigurableAIRouter extends import('../interfaces/index.js').AIRouter {
+export interface ConfigurableAIRouter extends AIRouter {
   registerAdapter(adapter: AIProviderAdapter): void
-  setDefaultStrategy(strategy: import('../interfaces/index.js').AIRoutingStrategy): Promise<void>
+  setDefaultStrategy(strategy: AIRoutingStrategy): Promise<void>
 }
 
 // Provider adapter interface — implement one per AI provider
@@ -81,7 +81,7 @@ export class DefaultAIRouter implements AIRouter {
       const adapter = this.adapters.get('ollama')
       if (!adapter || !(await adapter.isAvailable())) return null
       const model = adapter.models.find(m =>
-        required.every(cap => m.capabilities.includes(cap))
+        m.available && required.every(cap => m.capabilities.includes(cap))
       )
       return model ? { model, adapter } : null
     }
@@ -89,7 +89,8 @@ export class DefaultAIRouter implements AIRouter {
     // If explicit model requested
     if (request.model) {
       for (const adapter of this.adapters.values()) {
-        const model = adapter.models.find(m => m.id === request.model && m.available)
+        const model = adapter.models.find(m =>
+          m.id === request.model && m.available && required.every(cap => m.capabilities.includes(cap)))
         if (model && (await adapter.isAvailable())) {
           return { model, adapter }
         }

@@ -13,6 +13,20 @@ import type {
   PluginType,
 } from '../interfaces/index.js'
 
+/** True when `version` (x.y.z) is at least `minVersion`. Pre-release tags are ignored; a malformed version never satisfies. */
+export function satisfiesMinVersion(version: string, minVersion: string): boolean {
+  const parse = (v: string) => {
+    const parts = v.split('-')[0].split('.').map(Number)
+    return parts.length === 3 && parts.every(n => Number.isInteger(n) && n >= 0) ? parts : null
+  }
+  const a = parse(version), b = parse(minVersion)
+  if (!a || !b) return false
+  for (let i = 0; i < 3; i++) {
+    if (a[i] !== b[i]) return a[i] > b[i]
+  }
+  return true
+}
+
 export class InMemoryPluginRegistry implements PluginRegistry {
   private store = new Map<string, PluginDescriptor>()
 
@@ -136,7 +150,8 @@ export class InMemoryPluginRegistry implements PluginRegistry {
     const missing: string[] = []
     for (const dep of plugin.dependencies ?? []) {
       const found = this.store.get(dep.pluginId)
-      if (!found && !dep.optional) missing.push(dep.pluginId)
+      const satisfied = !!found && satisfiesMinVersion(found.version, dep.minVersion)
+      if (!satisfied && !dep.optional) missing.push(dep.pluginId)
     }
     return { valid: missing.length === 0, missing }
   }

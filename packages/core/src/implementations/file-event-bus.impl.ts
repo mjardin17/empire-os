@@ -63,7 +63,8 @@ export class FileEventBus implements EventBus {
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
       fs.appendFileSync(this.logPath, JSON.stringify(event) + '\n', 'utf8')
     } catch (e) {
-      process.stderr.write(`[FileEventBus] Warning: append failed: ${e}\n`)
+      // Not persisted means not published: the caller must see the failure, and no in-memory state changes.
+      throw new Error(`event not persisted: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 

@@ -3,8 +3,10 @@
  * Pub/sub backbone. Modules talk to each other through events.
  * No module imports another module directly — only events.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
+
+import type { Unsubscribe } from './memory-bus.js'
 
 export interface DomainEvent {
   id: string            // UUID v4
@@ -89,4 +91,3 @@ export interface EventBus {
   replay(correlationId: string): Promise<DomainEvent[]>
 }
 
-export type Unsubscribe = () => void

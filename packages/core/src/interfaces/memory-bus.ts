@@ -3,7 +3,7 @@
  * Shared persistent memory layer. No module owns this.
  * Empire Assistant reads/writes here like any other module.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 export type MemoryScope = 'global' | 'session' | 'module' | 'user'

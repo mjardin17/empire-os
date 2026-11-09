@@ -1,7 +1,8 @@
+import { EMPIRE_OS_URL } from '../config';
 import React, { useState, useEffect, useCallback } from "react";
 import { Compass, Search, Download, RefreshCw, Star, Cpu } from "lucide-react";
 
-const EMPIRE_OS = "http://localhost:3001";
+const EMPIRE_OS = EMPIRE_OS_URL;
 
 type CatalogItem = {
   id: string;
@@ -207,7 +208,7 @@ export default function DiscoveryFeed() {
 
       <div className="text-center">
         <a
-          href="http://localhost:3001/store/"
+          href={`${EMPIRE_OS_URL}/store/`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs font-semibold transition"

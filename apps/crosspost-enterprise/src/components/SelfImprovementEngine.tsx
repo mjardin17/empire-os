@@ -1,3 +1,4 @@
+import { EMPIRE_OS_URL } from '../config';
 /**
  * SelfImprovementEngine — Phase 3 React UI
  * Recommendations with approve/dismiss flow. Rollback info always shown.
@@ -68,8 +69,8 @@ export default function SelfImprovementEngine() {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 6000)
       const [rRes, hRes] = await Promise.all([
-        fetch('http://localhost:3001/self-improvement/recommendations', { signal: controller.signal }),
-        fetch('http://localhost:3001/self-improvement/history', { signal: controller.signal }),
+        fetch(`${EMPIRE_OS_URL}/self-improvement/recommendations`, { signal: controller.signal }),
+        fetch(`${EMPIRE_OS_URL}/self-improvement/history`, { signal: controller.signal }),
       ])
       const rData = rRes.ok ? (await rRes.json() as { recommendations: Recommendation[] }).recommendations : MOCK_RECS
       const hData = hRes.ok ? (await hRes.json() as { history: Recommendation[] }).history : []
@@ -88,7 +89,7 @@ export default function SelfImprovementEngine() {
   const analyze = async () => {
     setAnalyzing(true)
     try {
-      await fetch('http://localhost:3001/self-improvement/analyze', { method: 'POST' })
+      await fetch(`${EMPIRE_OS_URL}/self-improvement/analyze`, { method: 'POST' })
       setTimeout(() => { load(); setAnalyzing(false) }, 4000)
     } catch {
       setAnalyzing(false)
@@ -98,7 +99,7 @@ export default function SelfImprovementEngine() {
   const approve = async (rec: Recommendation) => {
     setActingId(rec.id)
     try {
-      await fetch('http://localhost:3001/self-improvement/approve', {
+      await fetch(`${EMPIRE_OS_URL}/self-improvement/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: rec.id }),
@@ -116,7 +117,7 @@ export default function SelfImprovementEngine() {
   const dismiss = async (rec: Recommendation) => {
     setActingId(rec.id)
     try {
-      await fetch('http://localhost:3001/self-improvement/dismiss', {
+      await fetch(`${EMPIRE_OS_URL}/self-improvement/dismiss`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: rec.id, reason: 'Dismissed by user' }),

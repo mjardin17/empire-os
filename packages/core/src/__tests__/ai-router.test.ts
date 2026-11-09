@@ -317,3 +317,42 @@ describe('DefaultAIRouter', () => {
     })
   })
 })
+
+describe('availability and capability are checked on every path', () => {
+  it('local-only never selects a model marked unavailable', async () => {
+    const router = new DefaultAIRouter()
+    const model = { ...makeModel('llama-off', 'ollama', ['completion']), available: false }
+    router.registerAdapter(makeAdapter('ollama', [model], true, 'should not be used'))
+    await expect(
+      router.complete({ callerId: 'test-caller', messages: [{ role: 'user', content: 'x' }], strategy: 'local-only' })
+    ).rejects.toThrow()
+  })
+
+  it('local-only respects requiredCapabilities', async () => {
+    const router = new DefaultAIRouter()
+    const model = makeModel('llama-chat', 'ollama', ['completion'])
+    router.registerAdapter(makeAdapter('ollama', [model], true, 'should not be used'))
+    await expect(
+      router.complete({
+        callerId: 'test-caller',
+        messages: [{ role: 'user', content: 'x' }],
+        strategy: 'local-only',
+        requiredCapabilities: ['code'],
+      })
+    ).rejects.toThrow()
+  })
+
+  it('an explicit model without the required capability is not selected', async () => {
+    const router = new DefaultAIRouter()
+    const model = makeModel('claude-plain', 'anthropic', ['completion'])
+    router.registerAdapter(makeAdapter('anthropic', [model], true, 'should not be used'))
+    await expect(
+      router.complete({
+        callerId: 'test-caller',
+        messages: [{ role: 'user', content: 'x' }],
+        model: 'claude-plain',
+        requiredCapabilities: ['code'],
+      })
+    ).rejects.toThrow()
+  })
+})

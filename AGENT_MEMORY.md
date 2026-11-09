@@ -76,8 +76,8 @@ Channels: Gods & Glory (GG) | Machine Learning (ML) | Little Olympus (LO)
 
 ```
 empire-os/
-├── packages/core/               ← SIX FROZEN CORE SERVICES
-│   ├── src/interfaces/          ← Frozen contracts (do not change)
+├── packages/core/               ← SIX CORE SERVICES
+│   ├── src/interfaces/          ← Core contracts (changes go through branch and review)
 │   └── src/implementations/     ← Working implementations (swap for prod)
 ├── apps/web/                    Next.js 14, port 3000 — dashboard UI (planned)
 ├── apps/api/                    FastAPI, port 8000 — data + agent API (planned)

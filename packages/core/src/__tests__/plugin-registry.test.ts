@@ -20,7 +20,7 @@ function makeDescriptor(
     version: '1.0.0',
     type: 'module',
     status: 'active',
-    capabilities: [{ name: 'default-cap', description: 'A default capability' }],
+    capabilities: [{ name: 'default-cap', description: 'A default capability', version: '1.0.0' }],
     endpoints: [],
     dependencies: [],
     priority: 10,
@@ -132,7 +132,7 @@ describe('InMemoryPluginRegistry', () => {
 
     it('filters by capability name', async () => {
       await registry.register(makeDescriptor('special', {
-        capabilities: [{ name: 'render-episode', description: 'Renders an episode' }],
+        capabilities: [{ name: 'render-episode', description: 'Renders an episode', version: '1.0.0' }],
       }))
       const found = await registry.list({ capability: 'render-episode' })
       expect(found).toHaveLength(1)
@@ -158,7 +158,7 @@ describe('InMemoryPluginRegistry', () => {
     it('returns true when an active plugin has the capability', async () => {
       await registry.register(makeDescriptor('video-pipeline', {
         status: 'active',
-        capabilities: [{ name: 'render-season', description: '' }],
+        capabilities: [{ name: 'render-season', description: '', version: '1.0.0' }],
       }))
       expect(await registry.hasCapability('render-season')).toBe(true)
     })
@@ -166,7 +166,7 @@ describe('InMemoryPluginRegistry', () => {
     it('returns false for inactive plugin even if it has the capability', async () => {
       await registry.register(makeDescriptor('offline-mod', {
         status: 'inactive',
-        capabilities: [{ name: 'secret-cap', description: '' }],
+        capabilities: [{ name: 'secret-cap', description: '', version: '1.0.0' }],
       }))
       expect(await registry.hasCapability('secret-cap')).toBe(false)
     })
@@ -174,11 +174,11 @@ describe('InMemoryPluginRegistry', () => {
     it('findByCapability returns all active matching plugins', async () => {
       await registry.register(makeDescriptor('a', {
         status: 'active',
-        capabilities: [{ name: 'publish-video', description: '' }],
+        capabilities: [{ name: 'publish-video', description: '', version: '1.0.0' }],
       }))
       await registry.register(makeDescriptor('b', {
         status: 'active',
-        capabilities: [{ name: 'publish-video', description: '' }],
+        capabilities: [{ name: 'publish-video', description: '', version: '1.0.0' }],
       }))
       const found = await registry.findByCapability('publish-video')
       expect(found).toHaveLength(2)
@@ -228,22 +228,22 @@ describe('InMemoryPluginRegistry', () => {
     it('counts plugins by type and status', async () => {
       await registry.register(makeDescriptor('m1', { type: 'module', status: 'active' }))
       await registry.register(makeDescriptor('m2', { type: 'module', status: 'active' }))
-      await registry.register(makeDescriptor('p1', { type: 'plugin', status: 'inactive' }))
+      await registry.register(makeDescriptor('p1', { type: 'tool', status: 'inactive' }))
 
       const s = await registry.stats()
       expect(s.total).toBe(3)
       expect(s.byType['module']).toBe(2)
-      expect(s.byType['plugin']).toBe(1)
+      expect(s.byType['tool']).toBe(1)
       expect(s.byStatus['active']).toBe(2)
       expect(s.byStatus['inactive']).toBe(1)
     })
 
     it('collects unique capabilities across all plugins', async () => {
       await registry.register(makeDescriptor('a', {
-        capabilities: [{ name: 'cap-x', description: '' }],
+        capabilities: [{ name: 'cap-x', description: '', version: '1.0.0' }],
       }))
       await registry.register(makeDescriptor('b', {
-        capabilities: [{ name: 'cap-y', description: '' }],
+        capabilities: [{ name: 'cap-y', description: '', version: '1.0.0' }],
       }))
       const s = await registry.stats()
       expect(s.capabilities).toContain('cap-x')
@@ -257,7 +257,7 @@ describe('InMemoryPluginRegistry', () => {
     it('returns valid:true when all required deps are registered', async () => {
       await registry.register(makeDescriptor('core'))
       await registry.register(makeDescriptor('storyforge', {
-        dependencies: [{ pluginId: 'core', optional: false }],
+        dependencies: [{ pluginId: 'core', optional: false, minVersion: '1.0.0' }],
       }))
 
       const result = await registry.validateDependencies('storyforge')
@@ -267,7 +267,7 @@ describe('InMemoryPluginRegistry', () => {
 
     it('returns valid:false with missing ids when dep is absent', async () => {
       await registry.register(makeDescriptor('crosspost', {
-        dependencies: [{ pluginId: 'missing-module', optional: false }],
+        dependencies: [{ pluginId: 'missing-module', optional: false, minVersion: '1.0.0' }],
       }))
 
       const result = await registry.validateDependencies('crosspost')
@@ -277,7 +277,7 @@ describe('InMemoryPluginRegistry', () => {
 
     it('ignores optional deps that are missing', async () => {
       await registry.register(makeDescriptor('video-pipeline', {
-        dependencies: [{ pluginId: 'optional-cache', optional: true }],
+        dependencies: [{ pluginId: 'optional-cache', optional: true, minVersion: '1.0.0' }],
       }))
 
       const result = await registry.validateDependencies('video-pipeline')

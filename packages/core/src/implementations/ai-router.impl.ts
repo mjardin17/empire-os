@@ -81,7 +81,7 @@ export class DefaultAIRouter implements AIRouter {
       const adapter = this.adapters.get('ollama')
       if (!adapter || !(await adapter.isAvailable())) return null
       const model = adapter.models.find(m =>
-        required.every(cap => m.capabilities.includes(cap))
+        m.available && required.every(cap => m.capabilities.includes(cap))
       )
       return model ? { model, adapter } : null
     }
@@ -89,7 +89,8 @@ export class DefaultAIRouter implements AIRouter {
     // If explicit model requested
     if (request.model) {
       for (const adapter of this.adapters.values()) {
-        const model = adapter.models.find(m => m.id === request.model && m.available)
+        const model = adapter.models.find(m =>
+          m.id === request.model && m.available && required.every(cap => m.capabilities.includes(cap)))
         if (model && (await adapter.isAvailable())) {
           return { model, adapter }
         }

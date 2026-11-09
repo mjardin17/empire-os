@@ -1,3 +1,4 @@
+import type { ConfigurableAIRouter } from '../implementations/ai-router.impl.js'
 /**
  * Integration test — bootstrap() + all 6 CoreServices
  * This is EA stability criterion 4: a test module instantiates and calls all 6 CoreServices.
@@ -97,20 +98,20 @@ describe('CoreServices — cross-service wiring', () => {
       id: 'test-module-a',
       name: 'Test A',
       version: '1.0.0',
+      description: 'test plugin',
       type: 'module',
       status: 'active',
-      capabilities: [{ name: 'test-cap', description: '' }],
-      endpoints: [],
+      capabilities: [{ name: 'test-cap', description: '', version: '1.0.0' }],
     })
     await pluginRegistry.register({
       id: 'test-module-b',
       name: 'Test B',
       version: '1.0.0',
+      description: 'test plugin',
       type: 'module',
       status: 'active',
       capabilities: [],
-      endpoints: [],
-      dependencies: [{ pluginId: 'test-module-a', optional: false }],
+      dependencies: [{ pluginId: 'test-module-a', minVersion: '1.0.0', optional: false }],
     })
 
     const result = await pluginRegistry.validateDependencies('test-module-b')
@@ -124,10 +125,12 @@ describe('CoreServices — cross-service wiring', () => {
     await moduleGateway.register({
       id: 'video-pipeline',
       name: 'Video Pipeline',
+      version: '1.0.0',
       baseUrl: 'http://localhost:8002',
+      description: 'test module',
       healthPath: '/empire/health',
-      capabilities: ['render-episode', 'council-run'],
       endpoints: [],
+      capabilities: ['render-episode', 'council-run'],
       priority: 20,
     })
 
@@ -138,16 +141,15 @@ describe('CoreServices — cross-service wiring', () => {
   })
 
   it('AIRouter: registerAdapter → models()', async () => {
-    const { aiRouter } = await bootstrap()
+    const { aiRouter } = await bootstrap();
 
-    aiRouter.registerAdapter({
+    (aiRouter as ConfigurableAIRouter).registerAdapter({
       provider: 'anthropic',
       models: [
         {
           id: 'claude-3-5',
           provider: 'anthropic',
-          name: 'Claude 3.5',
-          capabilities: ['completion', 'code'],
+          capabilities: ['chat', 'code'],
           contextWindow: 200000,
           costPerMToken: 15,
           available: true,
@@ -169,10 +171,12 @@ describe('CoreServices — cross-service wiring', () => {
     await moduleGateway.register({
       id: 'test-worker',
       name: 'Test Worker',
+      version: '1.0.0',
       baseUrl: 'http://localhost:9999',
+      description: 'test module',
       healthPath: '/empire/health',
-      capabilities: ['test-action'],
       endpoints: [],
+      capabilities: ['test-action'],
       priority: 10,
     })
 
@@ -181,21 +185,25 @@ describe('CoreServices — cross-service wiring', () => {
       id: 'test-workflow',
       name: 'Test Workflow',
       version: '1',
+      description: 'test workflow',
       initialStep: 'step-a',
       steps: [
         {
           id: 'step-a',
+          type: 'action',
+          name: 'step-a',
           action: 'test-action',
           moduleId: 'test-worker',
           onSuccess: 'step-b',
         },
         {
           id: 'step-b',
+          type: 'action',
+          name: 'step-b',
           action: 'test-action',
           moduleId: 'test-worker',
         },
       ],
-      timeout: 10000,
     })
 
     const instance = await workflowEngine.start('test-workflow', { input: 'bootstrap-test' })
@@ -212,18 +220,21 @@ describe('CoreServices — cross-service wiring', () => {
     await moduleGateway.register({
       id: 'test-worker-2',
       name: 'Worker 2',
+      version: '1.0.0',
       baseUrl: 'http://localhost:9998',
+      description: 'test module',
       healthPath: '/empire/health',
-      capabilities: ['noop'],
       endpoints: [],
+      capabilities: ['noop'],
     })
 
     await workflowEngine.define({
       id: 'shared-bus-test',
       name: 'Shared Bus Test',
       version: '1',
+      description: 'test workflow',
       initialStep: 'only-step',
-      steps: [{ id: 'only-step', action: 'noop', moduleId: 'test-worker-2' }],
+      steps: [{ id: 'only-step', type: 'action', name: 'only-step', action: 'noop', moduleId: 'test-worker-2' }],
     })
 
     await workflowEngine.start('shared-bus-test', {})

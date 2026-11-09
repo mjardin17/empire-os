@@ -172,6 +172,28 @@ describe('HttpModuleGateway', () => {
   // ── route ──────────────────────────────────────────────────────────────────
 
   describe('route()', () => {
+    it('rejects a path that would leave the registered module host', async () => {
+      await gateway.register(makeDescriptor('video-pipeline', { baseUrl: 'http://localhost:8002' }))
+      const fetchSpy = vi.fn()
+      vi.stubGlobal('fetch', fetchSpy)
+      for (const bad of ['//evil.example/x', 'http://evil.example/x', '/ok/../../secret', 'no-leading-slash']) {
+        await expect(gateway.route({ moduleId: 'video-pipeline', path: bad, method: 'GET' } as GatewayRequest))
+          .rejects.toThrow('invalid request path')
+      }
+      expect(fetchSpy).not.toHaveBeenCalled()
+    })
+
+    it('caller headers cannot overwrite the correlation id or source module', async () => {
+      await gateway.register(makeDescriptor('video-pipeline', { baseUrl: 'http://localhost:8002' }))
+      const fetchSpy = vi.fn(() => Promise.resolve({ ok: true, status: 200, headers: { get: () => null, entries: () => [][Symbol.iterator]() }, json: () => Promise.resolve({}), text: () => Promise.resolve('') }))
+      vi.stubGlobal('fetch', fetchSpy)
+      await gateway.route({ moduleId: 'video-pipeline', path: '/render', method: 'GET', correlationId: 'real-id',
+        headers: { 'X-Correlation-Id': 'spoofed', 'X-Source-Module': 'spoofed' } } as GatewayRequest)
+      const sent = (fetchSpy.mock.calls[0] as unknown[])[1] as { headers: Record<string, string> }
+      expect(sent.headers['X-Correlation-Id']).toBe('real-id')
+      expect(sent.headers['X-Source-Module']).toBe('empire-os-gateway')
+    })
+
     it('routes to module by moduleId and returns GatewayResponse', async () => {
       mockFetch(200, { rendered: true })
       await gateway.register(makeDescriptor('video-pipeline', {
@@ -256,5 +278,33 @@ describe('HttpModuleGateway', () => {
       const callArgs = fetchSpy.mock.calls[0]
       expect((callArgs[1] as RequestInit).headers).toMatchObject({ 'X-Custom': 'empire-test' })
     })
+  })
+})
+
+describe('route() request hardening', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, headers: new Map(), text: () => Promise.resolve('{}'), json: () => Promise.resolve({}) }))
+  })
+
+  it('rejects an absolute URL passed as the path', async () => {
+    const gw = new HttpModuleGateway()
+    await gw.register(makeDescriptor('safe-mod'))
+    await expect(gw.route({ moduleId: 'safe-mod', path: 'http://evil.example/steal', method: 'GET' })).rejects.toThrow()
+  })
+
+  it('rejects a path that does not start with a slash', async () => {
+    const gw = new HttpModuleGateway()
+    await gw.register(makeDescriptor('safe-mod-2'))
+    await expect(gw.route({ moduleId: 'safe-mod-2', path: '//evil.example/x', method: 'GET' })).rejects.toThrow()
+  })
+
+  it('cannot override the gateway source header from request headers', async () => {
+    const fetchSpy = vi.fn().mockResolvedValue({ ok: true, status: 200, headers: new Map(), text: () => Promise.resolve('{}'), json: () => Promise.resolve({}) })
+    vi.stubGlobal('fetch', fetchSpy)
+    const gw = new HttpModuleGateway()
+    await gw.register(makeDescriptor('spoof-target'))
+    await gw.route({ moduleId: 'spoof-target', path: '/ok', method: 'GET', headers: { 'X-Source-Module': 'attacker' } })
+    const sent = fetchSpy.mock.calls[0][1].headers
+    expect(sent['X-Source-Module']).toBe('empire-os-gateway')
   })
 })

@@ -1,3 +1,5 @@
+> **Status note (2026-11-09):** The NEXT steps below (COMMIT_SERVER.ps1, electron npm install) are old and may be done. The working copy is C:/Users/jjard/claude/empire-os-wired, not C:/Users/jjard/empire-os. Core: all six services have implementations; bootstrap uses in-memory buses unless a dataDir is given (then file-backed). Core tests: 139 pass, type check clean on branch fix/empire-core-typecheck. The stability checklist is not yet ticked.
+
 # Empire OS — Agent Memory
 
 **UPDATED: 2026-07-04 — Empire OS Phase 3 + Electron wrapper COMPLETE.**

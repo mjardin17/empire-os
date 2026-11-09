@@ -93,7 +93,7 @@ Adding a new topic requires updating `TOPICS` in `event-bus.ts` AND this documen
 The core is **stable** when ALL of the following are true:
 
 - [x] All 6 interface files compile with zero TypeScript errors
-- [ ] All 6 implementations pass unit tests (happy path + error path)
+- [x] All 6 implementations pass unit tests (happy path + error path)
 - [x] `bootstrap()` runs end-to-end without errors
 - [x] A test module successfully calls all 6 services via `CoreServices`
 - [x] WorkflowEngine runs a 3-step workflow end-to-end

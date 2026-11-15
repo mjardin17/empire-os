@@ -3,7 +3,7 @@
  * Central catalog of every module, tool, connector, and AI provider in the system.
  * Nothing runs unless it's registered here.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 export type PluginType = 'module' | 'tool' | 'connector' | 'ai-provider' | 'workflow'

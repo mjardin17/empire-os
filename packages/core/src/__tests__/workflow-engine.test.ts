@@ -48,6 +48,8 @@ function makeEventBusMock(): EventBus {
 function makeLinearWorkflow(stepCount: number): WorkflowDefinition {
   const steps = Array.from({ length: stepCount }, (_, i) => ({
     id: `step-${i + 1}`,
+    type: 'action' as const,
+    name: `Step ${i + 1}`,
     action: 'do-thing',
     moduleId: 'test-module',
     onSuccess: i < stepCount - 1 ? `step-${i + 2}` : undefined,
@@ -55,11 +57,11 @@ function makeLinearWorkflow(stepCount: number): WorkflowDefinition {
 
   return {
     id: `linear-wf-${stepCount}`,
+    description: 'linear test workflow',
     name: `Linear ${stepCount}-step Workflow`,
     version: '1',
     initialStep: 'step-1',
     steps,
-    timeout: 60000,
   }
 }
 
@@ -189,6 +191,7 @@ describe('InMemoryWorkflowEngine', () => {
 
       const failEngine = new InMemoryWorkflowEngine(failingGateway, eventBus)
       const wf: WorkflowDefinition = {
+        description: 'test workflow',
         id: 'failing-wf',
         name: 'Failing Workflow',
         version: '1',
@@ -196,12 +199,16 @@ describe('InMemoryWorkflowEngine', () => {
         steps: [
           {
             id: 'step-primary',
+            type: 'action',
+            name: 'step-primary',
             action: 'do-primary',
             moduleId: 'test-module',
             onFailure: 'step-recovery',
           },
           {
             id: 'step-recovery',
+            type: 'action',
+            name: 'step-recovery',
             action: 'do-recovery',
             moduleId: 'test-module',
           },
@@ -229,11 +236,12 @@ describe('InMemoryWorkflowEngine', () => {
 
       const failEngine = new InMemoryWorkflowEngine(failingGateway, eventBus)
       const wf: WorkflowDefinition = {
+        description: 'test workflow',
         id: 'no-handler-wf',
         name: 'No Handler',
         version: '1',
         initialStep: 'step-1',
-        steps: [{ id: 'step-1', action: 'will-fail', moduleId: 'test-module' }],
+        steps: [{ id: 'step-1', type: 'action', name: 'step-1', action: 'will-fail', moduleId: 'test-module' }],
       }
 
       await failEngine.define(wf)

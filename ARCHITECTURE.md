@@ -1,6 +1,6 @@
 # Empire OS — Architecture
 
-**Status: CORE FROZEN. Do not add features until core is stable.**
+**Status: CORE OPEN. Fix and extend on feature branches with tests; Josh reviews by pull request.**
 
 ---
 
@@ -14,7 +14,7 @@
 
 ## Six Core Services (packages/core/)
 
-All interfaces are in `packages/core/src/interfaces/`. They are frozen.
+All interfaces are in `packages/core/src/interfaces/`. They are open: changes go through branches and review.
 All implementations are in `packages/core/src/implementations/`.
 
 | Service | Interface | Implementation | Purpose |
@@ -92,16 +92,16 @@ Adding a new topic requires updating `TOPICS` in `event-bus.ts` AND this documen
 
 The core is **stable** when ALL of the following are true:
 
-- [ ] All 6 interface files compile with zero TypeScript errors
-- [ ] All 6 implementations pass unit tests (happy path + error path)
-- [ ] `bootstrap()` runs end-to-end without errors
-- [ ] A test module successfully calls all 6 services via `CoreServices`
-- [ ] WorkflowEngine runs a 3-step workflow end-to-end
-- [ ] EventBus delivers events across a publish → subscribe cycle
-- [ ] MemoryBus read/write/search/subscribe cycle passes
-- [ ] AIRouter routes, falls back, and returns stats correctly
-- [ ] ModuleGateway routes to a real HTTP endpoint (mock or real module)
-- [ ] PluginRegistry validates dependencies correctly
+- [x] All 6 interface files compile with zero TypeScript errors
+- [x] All 6 implementations pass unit tests (happy path + error path)
+- [x] `bootstrap()` runs end-to-end without errors
+- [x] A test module successfully calls all 6 services via `CoreServices`
+- [x] WorkflowEngine runs a 3-step workflow end-to-end
+- [x] EventBus delivers events across a publish → subscribe cycle
+- [x] MemoryBus read/write/search/subscribe cycle passes
+- [x] AIRouter routes, falls back, and returns stats correctly
+- [x] ModuleGateway routes to a real HTTP endpoint (mock or real module)
+- [x] PluginRegistry validates dependencies correctly
 
 **Empire Assistant does not start until every box above is checked.**
 

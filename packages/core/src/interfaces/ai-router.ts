@@ -4,7 +4,7 @@
  * Modules never instantiate model clients directly.
  * Empire Assistant is just another caller of this interface.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 export type AIProvider = 'anthropic' | 'google' | 'openai' | 'ollama' | 'deepseek'

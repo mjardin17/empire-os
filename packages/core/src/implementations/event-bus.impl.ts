@@ -47,7 +47,7 @@ export class InProcessEventBus implements EventBus {
     const topicSubs = this.subscribers.get(full.topic)
     if (topicSubs) {
       const deliveries = Array.from(topicSubs.values()).map(handler =>
-        Promise.resolve(handler(full)).catch(err => {
+        new Promise<void>(resolve => resolve(handler(full))).catch(err => {   // a synchronous throw becomes a rejection too
           console.error(`[EventBus] Handler error on topic ${full.topic}:`, err)
         })
       )
@@ -75,7 +75,7 @@ export class InProcessEventBus implements EventBus {
       const history = this._history.get(topic) ?? []
       Promise.resolve().then(async () => {
         for (const event of history) {
-          await Promise.resolve(handler(event)).catch(console.error)
+          await new Promise<void>(resolve => resolve(handler(event))).catch(console.error)
         }
       })
     }

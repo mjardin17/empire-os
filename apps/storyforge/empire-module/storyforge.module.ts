@@ -5,9 +5,10 @@
  * publishing intelligence, empire automation studio (campaigns, formats,
  * workflows, scheduler, event bus).
  *
- * Architecture: StoryForge runs as its own Python process (port 8001).
+ * Architecture: the book studio (Bookmaker, port 3010 by default) runs as its own process.
+ * Set STORYFORGE_BASE_URL to point somewhere else (e.g. the Python StoryForge engine).
  * This module is the Empire OS "face" — registration, health, events, workflows.
- * All business logic lives in the Python engine.
+ * All business logic lives in the book studio.
  */
 
 import { BaseModule } from '@empire-os/core'
@@ -22,7 +23,11 @@ import type {
 import { HIGGSFIELD_PLUGIN } from './higgsfield.plugin.js'
 import { STORY_PIPELINE_WORKFLOW } from './workflows/story-pipeline.js'
 
-const STORYFORGE_URL = process.env.STORYFORGE_BASE_URL ?? 'http://localhost:8001'
+const STORYFORGE_URL = (process.env.STORYFORGE_BASE_URL || 'http://localhost:3010').replace(/\/+$/, '')
+
+// Only these caller headers are passed on to the book studio. Hop-by-hop headers such as
+// host and content-length must not be forwarded because the body is re-serialised.
+const FORWARDED_HEADERS = ['x-correlation-id', 'accept']
 const MODULE_ID = 'storyforge'
 
 /** ModuleDescriptor registered with the Module Gateway */
@@ -35,6 +40,8 @@ const STORYFORGE_DESCRIPTOR = {
     'Phases 1-5: story science, character memory, world engine, image studio, ' +
     'publishing intelligence, empire automation studio.',
   capabilities: [
+    // Bookmaker book studio
+    'book-list', 'book-start',
     // Phase 1
     'story-science', 'character-memory', 'character-get', 'council-review', 'book-export',
     // Phase 2
@@ -80,10 +87,22 @@ const STORYFORGE_DESCRIPTOR = {
     { path: '/automation/scheduler/run-due',         method: 'POST' as const, description: 'Execute all due scheduled jobs' },
     { path: '/automation/events',                    method: 'GET'  as const, description: 'Poll Phase 5 event log' },
     { path: '/empire/health',                        method: 'GET'  as const, description: 'Health check', auth: false },
+    // Bookmaker book studio
+    { path: '/empire/books',                         method: 'GET'  as const, description: 'List finished books and Book Factory runs' },
+    { path: '/empire/books/start',                   method: 'POST' as const, description: 'Start a book (creates a DRY_RUN Book Factory run)' },
   ],
   healthPath: '/empire/health',
   baseUrl: STORYFORGE_URL,
   priority: 20,
+}
+
+function pickHeaders(headers: Record<string, string> | undefined): Record<string, string> {
+  const out: Record<string, string> = {}
+  if (!headers) return out
+  for (const [key, value] of Object.entries(headers)) {
+    if (typeof value === 'string' && FORWARDED_HEADERS.includes(key.toLowerCase())) out[key.toLowerCase()] = value
+  }
+  return out
 }
 
 export class StoryForgeModule extends BaseModule {
@@ -117,7 +136,7 @@ export class StoryForgeModule extends BaseModule {
   }
 
   /**
-   * Proxy Empire OS gateway requests to the StoryForge Python service.
+   * Proxy Empire OS gateway requests to the book studio (STORYFORGE_BASE_URL).
    * HttpModuleGateway calls fetch(baseUrl + path) directly, so this
    * method handles in-process routing (tests, direct calls).
    */
@@ -129,7 +148,7 @@ export class StoryForgeModule extends BaseModule {
       const isBodyless = request.method === 'GET' || request.method === 'DELETE'
       const res = await fetch(url, {
         method: request.method,
-        headers: { 'Content-Type': 'application/json', ...(request.headers ?? {}) },
+        headers: { 'Content-Type': 'application/json', ...pickHeaders(request.headers) },
         body: isBodyless ? undefined : JSON.stringify(request.body),
         signal: AbortSignal.timeout(request.timeoutMs ?? 60_000),
       })
@@ -193,7 +212,7 @@ export class StoryForgeModule extends BaseModule {
   }
 
   override async shutdown(): Promise<void> {
-    // Python process manages its own state — nothing to flush
+    // The book studio manages its own state — nothing to flush
   }
 }
 

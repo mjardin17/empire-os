@@ -34,6 +34,10 @@ while (Date.now() < deadline && !exited) {
     const res = await fetch(url)
     const body = await res.json()
     if (res.ok && body.status === 'online') {
+      if (!body.modules?.storyforge) {
+        console.error('Smoke check failed: /health has no storyforge module')
+        break
+      }
       console.log(`Server answered ${url}: status=${body.status}, modules=${Object.keys(body.modules ?? {}).length}`)
       ok = true
       break

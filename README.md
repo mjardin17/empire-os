@@ -59,6 +59,23 @@ pnpm smoke:server    # boots the server and checks GET /health
 | FastAPI (`apps/api`, optional) | http://localhost:8000 |
 | DB studio | `pnpm --filter @empire-os/database db:studio` |
 
+## Connected apps
+
+### Bookmaker (books)
+Empire OS loads the StoryForge module, which proxies `/storyforge/*` to your Bookmaker book studio.
+
+1. Run Bookmaker (the `feat/empire-contract` version or later): `npm run dev` in the bookmaker folder. It listens on **3010**.
+2. Start Empire OS (`pnpm start`). If Bookmaker is somewhere else, set `STORYFORGE_BASE_URL` (in the shell or `apps/empire-os-server/.env`).
+3. Check it: `curl http://localhost:3001/health` shows `storyforge: healthy`, and `curl http://localhost:3001/storyforge/empire/books` lists your books.
+4. The CrossPost app's **StoryForge** tab (`apps/crosspost-enterprise`, port 3000) lists your books and Book Factory runs and starts new books. Set `VITE_EMPIRE_OS_URL` if Empire OS isn't on `http://localhost:3001`.
+
+When Bookmaker isn't running, `/health` reports `storyforge: unhealthy`, `/storyforge/*` answers 502, and the panel says "Bookmaker is not running".
+
+| Empire OS route | Bookmaker route | What it does |
+|---|---|---|
+| `GET /storyforge/empire/books` | `GET /empire/books` | Finished books in `output_books/` plus Book Factory runs |
+| `POST /storyforge/empire/books/start` | `POST /empire/books/start` | `{ "title", "niche"?, "dryRun"? }` creates a DRY_RUN Book Factory run (no AI calls). `dryRun: true` only validates. |
+
 ## Agent Roster
 | Agent | Role |
 |-------|------|

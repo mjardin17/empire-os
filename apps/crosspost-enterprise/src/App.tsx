@@ -886,7 +886,7 @@ export default function App() {
             </div>
           </div>
 
-          {/* Empire OS v3 — direct connections to localhost:3001 */}
+          {/* Empire OS v3 — direct connections to Empire OS (VITE_EMPIRE_OS_URL, default localhost:4000) */}
           <div className="mb-4">
             <div className="px-3 py-1.5 text-[9px] font-mono font-bold tracking-widest text-slate-600 uppercase">
               Empire OS v3
@@ -2446,7 +2446,7 @@ export default function App() {
           <KnowledgeCenter />
         )}
 
-        {/* ── Empire OS v3 panels — direct connections to localhost:3001 ── */}
+        {/* ── Empire OS v3 panels — direct connections to Empire OS (default localhost:4000) ── */}
         {currentWorkspace === "empire-health" && (
           <HealthMonitorPanel />
         )}

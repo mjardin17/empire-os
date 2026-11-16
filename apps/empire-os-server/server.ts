@@ -2,11 +2,12 @@
  * Empire OS Server — Entry Point
  *
  * Boots all CoreServices, registers AI adapters, initialises EmpireModules,
- * and serves HTTP on PORT (default 3001).
+ * and serves HTTP on PORT (default 4000).
  *
  * URL scheme:  http://localhost:PORT/:moduleId/path
  *   empire-assistant  → all AI + agent endpoints
  *   storyforge        → Bookmaker book studio (STORYFORGE_BASE_URL, default :3010)
+ *   bosslisters       → Boss Listers reseller app (BOSSLISTERS_BASE_URL, default :3001)
  *   (future)          → crosspost, video-pipeline
  *
  * Start:  npm start   (or: npx tsx server.ts)
@@ -38,10 +39,13 @@ import { BenchmarkEngineModule } from './benchmark-engine.module.js'
 import { SelfImprovementModule } from './self-improvement.module.js'
 // Bookmaker book studio (StoryForge adapter)
 import { StoryForgeModule } from '../storyforge/empire-module/storyforge.module.js'
+// Boss Listers reseller app (remote-app module)
+import { BossListersModule } from './bosslisters.module.js'
 import type { EmpireModule } from '@empire-os/core'
 import type { GatewayRequest, HttpMethod } from '@empire-os/core'
 
-const PORT      = Number(process.env.PORT ?? 3001)
+// 4000, not 3001: Boss Listers has used 3001 for a long time (phone, extension, OAuth redirects).
+const PORT      = Number(process.env.PORT ?? 4000)
 const HOST      = process.env.HOST ?? 'localhost'
 const BASE_URL  = `http://${HOST}:${PORT}`
 const DATA_DIR  = process.env.DATA_DIR ?? path.resolve('.empire-data')
@@ -238,6 +242,14 @@ async function main(): Promise<void> {
   modules.set(storyforge.moduleId, storyforge)
   log(`Module ready: ${storyforge.moduleId} — http://${HOST}:${PORT}/storyforge/ → ${process.env.STORYFORGE_BASE_URL || 'http://localhost:3010'}`)
 
+  // Boss Listers — proxied at /bosslisters/*. Boss Listers runs separately
+  // (BOSSLISTERS_BASE_URL, default http://localhost:3001); if it is not running the
+  // module reports unhealthy and proxied calls answer 502.
+  const bossListers = new BossListersModule()
+  await bossListers.init(services, {})
+  modules.set(bossListers.moduleId, bossListers)
+  log(`Module ready: ${bossListers.moduleId} — http://${HOST}:${PORT}/bosslisters/ → ${bossListers.baseUrl}${process.env.BOSSLISTERS_EMPIRE_KEY ? '' : ' (BOSSLISTERS_EMPIRE_KEY not set: health only)'}`)
+
   // Future modules — add here:
   // const crosspost = new CrossPostModule()
   // await crosspost.init(services, { port: PORT, baseUrl: `${BASE_URL}/crosspost` })
@@ -342,7 +354,7 @@ async function main(): Promise<void> {
 
       const gReq: GatewayRequest = {
         moduleId,
-        path: path || '/',
+        path: (path || '/') + url.search, // keep the query string (?limit=…)
         method: (req.method ?? 'GET') as HttpMethod,
         body,
         headers: req.headers as Record<string, string>,

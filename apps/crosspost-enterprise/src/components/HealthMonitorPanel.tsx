@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Activity, Server, Cpu, HardDrive, Zap, RefreshCw, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
-const EMPIRE_OS = "http://localhost:3001";
 const POLL_MS = 6000;
 
 type ModuleHealth = { status: string; [key: string]: unknown };
@@ -107,7 +107,7 @@ export default function HealthMonitorPanel() {
             Health Monitor
           </h2>
           <p className="text-[11px] text-slate-500 font-mono mt-0.5">
-            Empire OS — localhost:3001 {usedMock && <span className="text-amber-400">[mock data — server offline]</span>}
+            Empire OS — {EMPIRE_OS.replace(/^https?:\/\//, "")} {usedMock && <span className="text-amber-400">[mock data — server offline]</span>}
           </p>
         </div>
         <button
@@ -130,7 +130,7 @@ export default function HealthMonitorPanel() {
           <div className={`text-lg font-black uppercase ${statusColor(data?.status ?? "unknown")}`}>
             {loading ? "…" : (data?.status ?? "Unknown")}
           </div>
-          <div className="text-[9px] font-mono text-slate-600 mt-0.5">Port 3001</div>
+          <div className="text-[9px] font-mono text-slate-600 mt-0.5">{EMPIRE_OS.replace(/^https?:\/\//, "")}</div>
         </div>
 
         <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4">
@@ -208,7 +208,7 @@ export default function HealthMonitorPanel() {
       {/* Empire OS Link */}
       <div className="text-center">
         <a
-          href="http://localhost:3001/empire-dashboard/"
+          href={`${EMPIRE_OS}/empire-dashboard/`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600/90 hover:bg-indigo-500 text-slate-100 font-mono text-xs font-bold transition"

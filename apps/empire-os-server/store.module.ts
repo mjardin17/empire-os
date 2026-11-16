@@ -478,7 +478,7 @@ export class EmpireStoreModule implements EmpireModule {
 
     // HTML UI
     if ((p === '/' || p === '') && req.method === 'GET') {
-      return d(200, buildHTML('http://localhost:3001/store'), { 'Content-Type': 'text/html' })
+      return d(200, buildHTML('/store'), { 'Content-Type': 'text/html' })
     }
 
     // Full catalog

@@ -30,13 +30,13 @@ pnpm install
 # 2. (Optional) add AI provider keys so the assistant has models
 cp .env.example .env   # then fill in the keys you use
 
-# 3. Start the Empire OS server (port 3001) and the web dashboard (port 3000)
+# 3. Start the Empire OS server (port 4000) and the web dashboard (port 3000)
 pnpm dev
 ```
 
 Check the server is up:
 ```bash
-curl http://localhost:3001/health   # → {"status":"online","modules":{...}}
+curl http://localhost:4000/health   # → {"status":"online","modules":{...}}
 ```
 
 Use `pnpm start` to run only the server. Set `PORT` to change its port and `EMPIRE_API_KEY` to require an API key (auth is off when it is unset, so only run without it on your own machine).
@@ -53,8 +53,8 @@ pnpm smoke:server    # boots the server and checks GET /health
 ### Services
 | Service | URL |
 |---------|-----|
-| Empire OS server (modules + health) | http://localhost:3001 |
-| Health | http://localhost:3001/health |
+| Empire OS server (modules + health) | http://localhost:4000 |
+| Health | http://localhost:4000/health |
 | Web dashboard | http://localhost:3000 |
 | FastAPI (`apps/api`, optional) | http://localhost:8000 |
 | DB studio | `pnpm --filter @empire-os/database db:studio` |
@@ -66,8 +66,8 @@ Empire OS loads the StoryForge module, which proxies `/storyforge/*` to your Boo
 
 1. Run Bookmaker (the `feat/empire-contract` version or later): `npm run dev` in the bookmaker folder. It listens on **3010**.
 2. Start Empire OS (`pnpm start`). If Bookmaker is somewhere else, set `STORYFORGE_BASE_URL` (in the shell or `apps/empire-os-server/.env`).
-3. Check it: `curl http://localhost:3001/health` shows `storyforge: healthy`, and `curl http://localhost:3001/storyforge/empire/books` lists your books.
-4. The CrossPost app's **StoryForge** tab (`apps/crosspost-enterprise`, port 3000) lists your books and Book Factory runs and starts new books. Set `VITE_EMPIRE_OS_URL` if Empire OS isn't on `http://localhost:3001`.
+3. Check it: `curl http://localhost:4000/health` shows `storyforge: healthy`, and `curl http://localhost:4000/storyforge/empire/books` lists your books.
+4. The CrossPost app's **StoryForge** tab (`apps/crosspost-enterprise`, port 3000) lists your books and Book Factory runs and starts new books. Set `VITE_EMPIRE_OS_URL` if Empire OS isn't on `http://localhost:4000`.
 
 When Bookmaker isn't running, `/health` reports `storyforge: unhealthy`, `/storyforge/*` answers 502, and the panel says "Bookmaker is not running".
 
@@ -75,6 +75,30 @@ When Bookmaker isn't running, `/health` reports `storyforge: unhealthy`, `/story
 |---|---|---|
 | `GET /storyforge/empire/books` | `GET /empire/books` | Finished books in `output_books/` plus Book Factory runs |
 | `POST /storyforge/empire/books/start` | `POST /empire/books/start` | `{ "title", "niche"?, "dryRun"? }` creates a DRY_RUN Book Factory run (no AI calls). `dryRun: true` only validates. |
+
+### Boss Listers (reselling)
+Empire OS loads the Boss Listers module, which proxies `/bosslisters/*` to the Boss Listers app (boss-listers-mvp).
+
+1. In Boss Listers (the `feat/empire-contract` version or later) set `EMPIRE_SHARED_KEY` to a long random value, and run it as usual (`npm run dev`, port **3001**).
+2. In Empire OS set `BOSSLISTERS_EMPIRE_KEY` to the same value. If Boss Listers isn't on `http://localhost:3001`, set `BOSSLISTERS_BASE_URL` (e.g. your Tailscale URL).
+3. Check it: `curl http://localhost:4000/health` shows `bosslisters: healthy`, and `curl http://localhost:4000/bosslisters/empire/listings?limit=5` shows your stock list.
+4. The CrossPost app's **Boss Listers** tab shows stock totals by stage, the newest items, which selling sites have credentials, and adds an item as an unlisted draft ("Check only" is on by default).
+
+Without the key only health works (the panel says what is missing). When Boss Listers isn't running, `/health` reports `bosslisters: unhealthy`, `/bosslisters/*` answers 502, and the panel shows it offline. Only the routes below are proxied; nothing in Empire OS can post or publish a listing.
+
+| Empire OS route | Boss Listers route | What it does |
+|---|---|---|
+| `GET /bosslisters/empire/health` | `GET /empire/health` | Is it up and set up (no key needed) |
+| `GET /bosslisters/empire/listings?limit=&stage=` | `GET /empire/listings` | Stock list totals by stage and the newest items |
+| `GET /bosslisters/empire/platforms` | `GET /empire/platforms` | Which selling sites have credentials (no live calls) |
+| `POST /bosslisters/empire/stock/add` | `POST /empire/stock/add` | `{ "title", "price"?, "quantity"?, "condition"?, "dryRun"? }` adds an unlisted draft |
+| `POST /bosslisters/empire/event` | `POST /empire/event` | Empire OS events (`system.alert` is forwarded automatically) |
+
+### Adding the next app
+Both modules are `RemoteAppModule`s (`packages/core/src/modules/remote-app.module.ts`). For another app, give it `GET /empire/health` and `POST /empire/event`, then create a module with its id, base-URL env var and default, its endpoints (only declared endpoints are proxied), and optional auth headers; see `apps/empire-os-server/bosslisters.module.ts`, then add it in `server.ts`.
+
+### Ports
+Empire OS listens on **4000** (`PORT` overrides it). It used to default to 3001, which Boss Listers has always used (phone, Chrome extension, OAuth redirects, Tailscale), so Empire OS moved. If your `.env` still says `PORT=3001`, change it to 4000. The CrossPost panels use `VITE_EMPIRE_OS_URL` (default `http://localhost:4000`).
 
 ## Agent Roster
 | Agent | Role |

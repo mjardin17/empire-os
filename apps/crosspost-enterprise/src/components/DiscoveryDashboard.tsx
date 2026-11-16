@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { TrendingUp, Star, Zap, Server, Package, ArrowUpCircle, RefreshCw, ExternalLink, Copy, CheckCircle, Sparkles, Trophy, Cpu } from 'lucide-react'
+import { EMPIRE_OS } from "../lib/empireOs";
 
 // ── Minimal shared types ──────────────────────────────────────────────────────
 
@@ -190,9 +191,9 @@ async function fetchAll(): Promise<DashboardData> {
   const timeout = (ms: number) => new AbortController().signal
   // fire all in parallel, fail individually to mock
   const [discRes, benchRes, recRes] = await Promise.allSettled([
-    fetch('http://localhost:3001/discovery-engine/all', { signal: AbortSignal.timeout(6000) }),
-    fetch('http://localhost:3001/benchmark-engine/latest', { signal: AbortSignal.timeout(6000) }),
-    fetch('http://localhost:3001/self-improvement/recommendations', { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS}/discovery-engine/all`, { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS}/benchmark-engine/latest`, { signal: AbortSignal.timeout(6000) }),
+    fetch(`${EMPIRE_OS}/self-improvement/recommendations`, { signal: AbortSignal.timeout(6000) }),
   ])
 
   let allItems: DiscoveryItem[] = []

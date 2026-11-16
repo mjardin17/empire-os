@@ -25,7 +25,8 @@ import * as fs from 'fs'
 // ---- Constants -------------------------------------------------------
 
 const CROSSPOST_URL  = 'http://localhost:3000'
-const EMPIRE_OS_URL  = 'http://localhost:3001'
+// Empire OS server: default port 4000 (Boss Listers keeps 3001). Override with EMPIRE_OS_URL.
+const EMPIRE_OS_URL  = (process.env.EMPIRE_OS_URL || `http://localhost:${process.env.PORT ?? 4000}`).replace(/\/+$/, '')
 const APP_NAME       = 'Empire OS'
 const WINDOW_STATE_FILE = path.join(app.getPath('userData'), 'window-state.json')
 
@@ -167,7 +168,7 @@ function showConnectionError(): void {
       <div style="display:flex;gap:12px;margin-top:8px;">
         <button onclick="location.reload()" style="padding:10px 20px;background:#3b82f6;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;">Retry</button>
       </div>
-      <p style="margin:0;font-size:12px;color:#475569;">CrossPost: http://localhost:3000 &nbsp;|&nbsp; Empire OS: http://localhost:3001</p>
+      <p style="margin:0;font-size:12px;color:#475569;">CrossPost: http://localhost:3000 &nbsp;|&nbsp; Empire OS: ${EMPIRE_OS_URL}</p>
     </body>
     </html>
   `

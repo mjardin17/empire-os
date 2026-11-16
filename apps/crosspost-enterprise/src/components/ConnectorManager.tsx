@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Plug, CheckCircle, XCircle, RefreshCw, ExternalLink, AlertTriangle } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
-const EMPIRE_OS = "http://localhost:3001";
 
 type ConnectorStatus = "online" | "offline" | "unknown" | "degraded";
 
@@ -151,14 +151,14 @@ export default function ConnectorManager() {
             ? <CheckCircle className="w-4 h-4 text-emerald-400" />
             : <XCircle className="w-4 h-4 text-red-400" />}
           <span className="text-sm font-bold font-mono text-slate-200">Empire OS Server</span>
-          <span className="text-[10px] font-mono text-slate-500">localhost:3001</span>
+          <span className="text-[10px] font-mono text-slate-500">{EMPIRE_OS.replace(/^https?:\/\//, "")}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className={`text-[10px] font-mono font-bold uppercase ${empireOnline ? "text-emerald-400" : "text-red-400"}`}>
             {empireOnline ? "ONLINE" : "OFFLINE"}
           </span>
           {empireOnline && (
-            <a href="http://localhost:3001/empire-dashboard/" target="_blank" rel="noopener noreferrer"
+            <a href={`${EMPIRE_OS}/empire-dashboard/`} target="_blank" rel="noopener noreferrer"
               className="text-indigo-400 hover:text-indigo-300 text-[10px] font-mono">
               Open ↗
             </a>

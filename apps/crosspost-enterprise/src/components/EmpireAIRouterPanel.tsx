@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Brain, Send, RefreshCw, Zap, Clock, DollarSign, Server } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
-const EMPIRE_OS = "http://localhost:3001";
 const CROSSPOST  = ""; // relative — CrossPost's own /api/empire/ai-router
 
 type Provider = { id: string; capabilities: string[]; contextWindow?: number; costPerMToken?: number };
@@ -88,7 +88,7 @@ export default function EmpireAIRouterPanel() {
       } catch { continue; }
     }
 
-    setError("Both Empire OS (3001) and CrossPost (3000) endpoints failed. Ensure at least one server is running.");
+    setError(`Both Empire OS (${EMPIRE_OS}) and CrossPost (3000) endpoints failed. Ensure at least one server is running.`);
     setSending(false);
   };
 

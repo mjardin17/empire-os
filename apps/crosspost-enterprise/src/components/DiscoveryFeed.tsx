@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Compass, Search, Download, RefreshCw, Star, Cpu } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
-const EMPIRE_OS = "http://localhost:3001";
 
 type CatalogItem = {
   id: string;
@@ -85,7 +85,7 @@ export default function DiscoveryFeed() {
       });
     } catch { /* fire-and-forget */ }
     setInstalling(null);
-    alert(`Install triggered for ${item.name}. Check Empire OS Store or Installer at localhost:3001/installer/`);
+    alert(`Install triggered for ${item.name}. Check Empire OS Store or Installer at ${EMPIRE_OS}/installer/`);
   };
 
   const filtered = catalog.filter((item) => {
@@ -207,7 +207,7 @@ export default function DiscoveryFeed() {
 
       <div className="text-center">
         <a
-          href="http://localhost:3001/store/"
+          href={`${EMPIRE_OS}/store/`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-mono text-xs font-semibold transition"

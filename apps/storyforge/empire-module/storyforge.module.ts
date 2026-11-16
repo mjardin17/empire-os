@@ -11,28 +11,17 @@
  * All business logic lives in the book studio.
  */
 
-import { BaseModule } from '@empire-os/core'
-import type {
-  CoreServices,
-  ModuleConfig,
-  GatewayRequest,
-  GatewayResponse,
-  DomainEvent,
-  HealthReport,
-} from '@empire-os/core'
+import { RemoteAppModule } from '@empire-os/core'
+import type { RemoteAppOptions } from '@empire-os/core'
 import { HIGGSFIELD_PLUGIN } from './higgsfield.plugin.js'
 import { STORY_PIPELINE_WORKFLOW } from './workflows/story-pipeline.js'
 
-const STORYFORGE_URL = (process.env.STORYFORGE_BASE_URL || 'http://localhost:3010').replace(/\/+$/, '')
-
-// Only these caller headers are passed on to the book studio. Hop-by-hop headers such as
-// host and content-length must not be forwarded because the body is re-serialised.
-const FORWARDED_HEADERS = ['x-correlation-id', 'accept']
+const DEFAULT_STORYFORGE_URL = 'http://localhost:3010'
 const MODULE_ID = 'storyforge'
 
-/** ModuleDescriptor registered with the Module Gateway */
-const STORYFORGE_DESCRIPTOR = {
-  id: MODULE_ID,
+/** Remote-app options: registered with the Module Gateway as the StoryForge descriptor */
+const STORYFORGE_OPTIONS: RemoteAppOptions = {
+  moduleId: MODULE_ID,
   name: 'StoryForge Engine',
   version: '5.0.0',
   description:
@@ -92,24 +81,22 @@ const STORYFORGE_DESCRIPTOR = {
     { path: '/empire/books/start',                   method: 'POST' as const, description: 'Start a book (creates a DRY_RUN Book Factory run)' },
   ],
   healthPath: '/empire/health',
-  baseUrl: STORYFORGE_URL,
+  baseUrlEnv: 'STORYFORGE_BASE_URL',
+  defaultBaseUrl: DEFAULT_STORYFORGE_URL,
+  // Empire OS events forwarded to the book studio's /empire/event (fire-and-forget)
+  forwardTopics: ['render.completed', 'render.failed', 'workflow.step.completed', 'system.alert'],
+  // The StoryForge engine has more routes than are declared here, so pass every path through.
+  restrictToEndpoints: false,
   priority: 20,
 }
 
-function pickHeaders(headers: Record<string, string> | undefined): Record<string, string> {
-  const out: Record<string, string> = {}
-  if (!headers) return out
-  for (const [key, value] of Object.entries(headers)) {
-    if (typeof value === 'string' && FORWARDED_HEADERS.includes(key.toLowerCase())) out[key.toLowerCase()] = value
+export class StoryForgeModule extends RemoteAppModule {
+  constructor() {
+    super(STORYFORGE_OPTIONS)
   }
-  return out
-}
-
-export class StoryForgeModule extends BaseModule {
-  readonly moduleId = MODULE_ID
 
   protected override async onInit(): Promise<void> {
-    const { pluginRegistry, workflowEngine, eventBus, moduleGateway } = this.services
+    const { pluginRegistry, workflowEngine } = this.services
 
     // Register Higgsfield as cinematic connector
     await pluginRegistry.register(HIGGSFIELD_PLUGIN)
@@ -117,102 +104,8 @@ export class StoryForgeModule extends BaseModule {
     // Register story-to-render workflow (includes Phase 5 automation steps)
     await workflowEngine.define(STORY_PIPELINE_WORKFLOW)
 
-    // Register StoryForge with Module Gateway
-    await moduleGateway.register(STORYFORGE_DESCRIPTOR)
-
-    // Subscribe to Empire OS events to forward to StoryForge
-    await eventBus.subscribe('render.completed', (e) => this.handleEvent(e))
-    await eventBus.subscribe('render.failed', (e) => this.handleEvent(e))
-    await eventBus.subscribe('workflow.step.completed', (e) => this.handleEvent(e))
-    await eventBus.subscribe('system.alert', (e) => this.handleEvent(e))
-
-    await this.emit('agent.action', {
-      action: 'module.registered',
-      moduleId: MODULE_ID,
-      version: '5.0.0',
-      storyforgeUrl: STORYFORGE_URL,
-      phases: [1, 2, 3, 4, 5],
-    })
-  }
-
-  /**
-   * Proxy Empire OS gateway requests to the book studio (STORYFORGE_BASE_URL).
-   * HttpModuleGateway calls fetch(baseUrl + path) directly, so this
-   * method handles in-process routing (tests, direct calls).
-   */
-  async handleRequest(request: GatewayRequest): Promise<GatewayResponse> {
-    const start = Date.now()
-    const url = `${STORYFORGE_URL}${request.path}`
-
-    try {
-      const isBodyless = request.method === 'GET' || request.method === 'DELETE'
-      const res = await fetch(url, {
-        method: request.method,
-        headers: { 'Content-Type': 'application/json', ...pickHeaders(request.headers) },
-        body: isBodyless ? undefined : JSON.stringify(request.body),
-        signal: AbortSignal.timeout(request.timeoutMs ?? 60_000),
-      })
-      const body = await res.json().catch(() => null)
-      return { status: res.status, body, moduleId: MODULE_ID, durationMs: Date.now() - start }
-    } catch (err) {
-      await this.emit('agent.error', {
-        moduleId: MODULE_ID,
-        path: request.path,
-        error: err instanceof Error ? err.message : String(err),
-      })
-      return {
-        status: 502,
-        body: { error: 'StoryForge service unavailable', detail: String(err) },
-        moduleId: MODULE_ID,
-        durationMs: Date.now() - start,
-      }
-    }
-  }
-
-  override async handleEvent(event: DomainEvent): Promise<void> {
-    // Forward Empire OS events to StoryForge's /empire/event endpoint (fire-and-forget)
-    fetch(`${STORYFORGE_URL}/empire/event`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        topic: event.topic,
-        source: event.source,
-        payload: event.payload,
-        correlationId: event.correlationId,
-      }),
-      signal: AbortSignal.timeout(2_000),
-    }).catch(() => { /* StoryForge may not be running — non-fatal */ })
-  }
-
-  override async health(): Promise<HealthReport> {
-    try {
-      const res = await fetch(`${STORYFORGE_URL}/empire/health`, {
-        signal: AbortSignal.timeout(5_000),
-      })
-      if (!res.ok) {
-        return {
-          status: 'degraded',
-          details: { httpStatus: res.status, url: STORYFORGE_URL },
-          checkedAt: new Date().toISOString(),
-        }
-      }
-      const body = await res.json()
-      return {
-        status: 'healthy',
-        details: { storyforge: body, url: STORYFORGE_URL },
-        checkedAt: new Date().toISOString(),
-      }
-    } catch {
-      return {
-        status: 'unhealthy',
-        details: { reason: 'StoryForge service not reachable', url: STORYFORGE_URL },
-        checkedAt: new Date().toISOString(),
-      }
-    }
-  }
-
-  override async shutdown(): Promise<void> {
-    // The book studio manages its own state — nothing to flush
+    // Register with the Module Gateway, subscribe the forwarded topics, announce the module
+    await super.onInit()
   }
 }
 

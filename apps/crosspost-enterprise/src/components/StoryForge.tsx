@@ -2,11 +2,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   BookOpen, Play, RefreshCw, AlertTriangle, CheckCircle2, FileText, Download, PlugZap, Factory,
 } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
 // The panel talks to the Empire OS server, which proxies /storyforge/* to the Bookmaker
 // book studio (STORYFORGE_BASE_URL on the server, default http://localhost:3010).
-const EMPIRE_OS: string =
-  ((import.meta as any).env?.VITE_EMPIRE_OS_URL as string | undefined)?.replace(/\/+$/, "") || "http://localhost:3001";
 
 type Connection =
   | { state: "checking" }

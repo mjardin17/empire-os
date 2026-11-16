@@ -362,7 +362,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
           <div class="quick-item" onclick="nav('store', document.querySelector('[onclick*=store]'))">
             <div class="quick-icon">🛍️</div><div class="quick-label">Store</div>
           </div>
-          <div class="quick-item" onclick="window.open('http://localhost:3001/model-manager/','_blank')">
+          <div class="quick-item" onclick="window.open('/model-manager/','_blank')">
             <div class="quick-icon">📦</div><div class="quick-label">Model Manager</div>
           </div>
           <div class="quick-item" onclick="nav('media', document.querySelector('[onclick*=media]'))">
@@ -509,7 +509,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
       <div class="page" id="page-memory">
         <div class="search-row">
           <input class="search-input" id="mem-search" placeholder="Search memory..." oninput="searchMemory(this.value)">
-          <button class="btn primary" onclick="window.open('http://localhost:3001/knowledge-base/','_blank')">Open Full View ↗</button>
+          <button class="btn primary" onclick="window.open('/knowledge-base/','_blank')">Open Full View ↗</button>
         </div>
         <div class="card-grid" id="memory-grid">Loading...</div>
       </div>
@@ -527,7 +527,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
           <div class="card" style="margin-bottom:14px">
             <h2 style="font-size:14px;font-weight:600;margin-bottom:14px">Empire OS Configuration</h2>
             <table class="table">
-              <tr><td style="color:var(--muted)">Server</td><td>http://localhost:3001</td></tr>
+              <tr><td style="color:var(--muted)">Server</td><td><script>document.write(location.origin)</script></td></tr>
               <tr><td style="color:var(--muted)">Ollama</td><td>http://localhost:11434</td></tr>
               <tr><td style="color:var(--muted)">Default Strategy</td><td>cost (Ollama first)</td></tr>
               <tr><td style="color:var(--muted)">RAM</td><td>8 GB (Josh's laptop)</td></tr>
@@ -536,11 +536,11 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
           <div class="card">
             <h2 style="font-size:14px;font-weight:600;margin-bottom:12px">Quick Links</h2>
             <div style="display:flex;flex-direction:column;gap:6px">
-              <button class="btn" onclick="window.open('http://localhost:3001/model-manager/')">📦 Model Manager</button>
-              <button class="btn" onclick="window.open('http://localhost:3001/discovery/')">🔭 Discovery (full)</button>
-              <button class="btn" onclick="window.open('http://localhost:3001/knowledge-base/')">🧠 Knowledge Base (full)</button>
-              <button class="btn" onclick="window.open('http://localhost:3001/health-monitor/')">💚 Health Monitor (full)</button>
-              <button class="btn" onclick="window.open('http://localhost:3001/media-engine/')">🎬 Media Engine (full)</button>
+              <button class="btn" onclick="window.open('/model-manager/')">📦 Model Manager</button>
+              <button class="btn" onclick="window.open('/discovery/')">🔭 Discovery (full)</button>
+              <button class="btn" onclick="window.open('/knowledge-base/')">🧠 Knowledge Base (full)</button>
+              <button class="btn" onclick="window.open('/health-monitor/')">💚 Health Monitor (full)</button>
+              <button class="btn" onclick="window.open('/media-engine/')">🎬 Media Engine (full)</button>
               <button class="btn" onclick="window.open('http://localhost:11434')">🦙 Ollama API</button>
             </div>
           </div>
@@ -573,7 +573,7 @@ html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(-
 <div class="toast" id="toast"></div>
 
 <script>
-const E = 'http://localhost:3001'
+const E = location.origin
 const O = 'http://localhost:11434'
 
 // ── Navigation ──────────────────────────────────────────────────────────────

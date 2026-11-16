@@ -104,7 +104,7 @@ export class EmpireAssistantModule extends BaseModule {
     const { moduleGateway, eventBus, memoryBus } = this.services
 
     // Build the full descriptor — baseUrl comes from server config at init time
-    const baseUrl = (this.config.baseUrl as string) ?? 'http://localhost:3001/empire-assistant'
+    const baseUrl = (this.config.baseUrl as string) ?? `http://localhost:${process.env.PORT ?? 4000}/empire-assistant`
     const descriptor = { ...EA_DESCRIPTOR_BASE, baseUrl }
 
     // Register with ModuleGateway so the platform can route to us

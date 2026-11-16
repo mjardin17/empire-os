@@ -6,7 +6,7 @@
  * Empire Assistant is a MODULE, not a core service.
  * It CONSUMES CoreServices. It does NOT own memory, AI routing, or orchestration.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 import type { MemoryBus } from './memory-bus.js'

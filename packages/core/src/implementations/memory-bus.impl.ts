@@ -44,7 +44,7 @@ export class InMemoryMemoryBus implements MemoryBus {
     for (const [pattern, handlers] of this.subscribers.entries()) {
       if (this.matchPattern(pattern, key)) {
         for (const handler of handlers) {
-          Promise.resolve(handler(entry, change)).catch(console.error)
+          new Promise<void>(resolve => resolve(handler(entry, change))).catch(console.error)
         }
       }
     }

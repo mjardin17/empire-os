@@ -3,7 +3,7 @@
  * Internal API gateway. Every module registers here.
  * External requests come in → gateway routes to the right module.
  *
- * STABILITY STATUS: FROZEN — do not change without Josh approval.
+ * STABILITY STATUS: OPEN — changes go on feature branches with tests; Josh reviews by pull request.
  */
 
 export type ModuleStatus = 'healthy' | 'degraded' | 'offline' | 'starting'

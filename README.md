@@ -18,34 +18,46 @@ AI YouTube factory management system — **Viral Engine**
 ## Quick Start
 
 ### Prerequisites
-- Node 20+, pnpm 9+, Python 3.12+, Docker Desktop
+- Node 20+ and pnpm 9+ (required)
+- Python 3.12+ (only for the FastAPI service in `apps/api`)
+- Docker Desktop (only for Postgres/Redis in `docker/`, which the core server does not need)
 
-### Dev setup
+### Run it
 ```bash
-# 1. Copy env
-cp .env.example .env
-# Fill in your API keys in .env
-
-# 2. Start infrastructure
-cd docker && docker compose up -d
-
-# 3. Install dependencies
+# 1. Install dependencies
 pnpm install
 
-# 4. Generate Prisma client
-cd packages/database && pnpm db:generate && pnpm db:push
+# 2. (Optional) add AI provider keys so the assistant has models
+cp .env.example .env   # then fill in the keys you use
 
-# 5. Start all apps
+# 3. Start the Empire OS server (port 3001) and the web dashboard (port 3000)
 pnpm dev
+```
+
+Check the server is up:
+```bash
+curl http://localhost:3001/health   # → {"status":"online","modules":{...}}
+```
+
+Use `pnpm start` to run only the server. Set `PORT` to change its port and `EMPIRE_API_KEY` to require an API key (auth is off when it is unset, so only run without it on your own machine).
+
+### Checks (same as CI)
+```bash
+pnpm type-check      # core + web TypeScript
+pnpm lint            # web ESLint
+pnpm test            # core unit tests (vitest)
+pnpm --filter @empire-os/web build
+pnpm smoke:server    # boots the server and checks GET /health
 ```
 
 ### Services
 | Service | URL |
 |---------|-----|
+| Empire OS server (modules + health) | http://localhost:3001 |
+| Health | http://localhost:3001/health |
 | Web dashboard | http://localhost:3000 |
-| API | http://localhost:8000 |
-| API docs | http://localhost:8000/docs |
-| DB studio | `pnpm db:studio` |
+| FastAPI (`apps/api`, optional) | http://localhost:8000 |
+| DB studio | `pnpm --filter @empire-os/database db:studio` |
 
 ## Agent Roster
 | Agent | Role |

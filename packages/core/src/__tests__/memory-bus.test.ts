@@ -31,10 +31,10 @@ describe('InMemoryMemoryBus', () => {
 
     it('scopes keys — same key in different scopes are independent', async () => {
       await bus.write('config', 'global-val', { scope: 'global' })
-      await bus.write('config', 'local-val', { scope: 'local', moduleId: 'storyforge' })
+      await bus.write('config', 'local-val', { scope: 'module', moduleId: 'storyforge' })
 
       const g = await bus.read('config', 'global')
-      const l = await bus.read('config', 'local')
+      const l = await bus.read('config', 'module')
 
       expect(g!.value).toBe('global-val')
       expect(l!.value).toBe('local-val')
@@ -182,22 +182,22 @@ describe('InMemoryMemoryBus', () => {
 
   describe('clear()', () => {
     it('removes all entries matching scope', async () => {
-      await bus.write('a', 1, { scope: 'local', moduleId: 'mod-a' })
-      await bus.write('b', 2, { scope: 'local', moduleId: 'mod-b' })
+      await bus.write('a', 1, { scope: 'module', moduleId: 'mod-a' })
+      await bus.write('b', 2, { scope: 'module', moduleId: 'mod-b' })
       await bus.write('c', 3, { scope: 'global' })
 
-      const count = await bus.clear('local')
+      const count = await bus.clear('module')
       expect(count).toBe(2)
       expect(await bus.read('c', 'global')).not.toBeNull()
     })
 
     it('scopes clear by moduleId when provided', async () => {
-      await bus.write('x', 1, { scope: 'local', moduleId: 'mod-a' })
-      await bus.write('y', 2, { scope: 'local', moduleId: 'mod-b' })
+      await bus.write('x', 1, { scope: 'module', moduleId: 'mod-a' })
+      await bus.write('y', 2, { scope: 'module', moduleId: 'mod-b' })
 
-      const count = await bus.clear('local', 'mod-a')
+      const count = await bus.clear('module', 'mod-a')
       expect(count).toBe(1)
-      expect(await bus.read('y', 'local')).not.toBeNull()
+      expect(await bus.read('y', 'module')).not.toBeNull()
     })
   })
 })

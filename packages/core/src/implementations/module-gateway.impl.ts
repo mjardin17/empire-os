@@ -12,6 +12,14 @@ import type {
   ModuleStatus,
 } from '../interfaces/index.js'
 
+/** A request path must be a plain absolute path on the module's own host: no scheme, no protocol-relative '//',
+ *  and no '..' segments that could climb out of the module's routes. */
+export function isSafeRequestPath(path: string): boolean {
+  if (typeof path !== 'string' || !path.startsWith('/') || path.startsWith('//')) return false
+  if (path.includes('://') || path.includes(String.fromCharCode(92))) return false
+  return !path.split('/').includes('..')
+}
+
 export class HttpModuleGateway implements ModuleGateway {
   private registry = new Map<string, ModuleDescriptor>()
   private healthCache = new Map<string, { status: ModuleStatus; checkedAt: number }>()
@@ -84,14 +92,16 @@ export class HttpModuleGateway implements ModuleGateway {
       throw new Error('GatewayRequest requires moduleId or capability')
     }
 
+    if (!isSafeRequestPath(request.path)) throw new Error(`invalid request path: ${request.path}`)
     const url = `${target.baseUrl}${request.path}`
     const timeout = request.timeoutMs ?? 30_000
 
+    // Caller headers go first so they cannot overwrite the correlation id or the source module.
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...request.headers,
       'X-Correlation-Id': request.correlationId ?? crypto.randomUUID(),
       'X-Source-Module': 'empire-os-gateway',
-      ...request.headers,
     }
 
     const res = await fetch(url, {

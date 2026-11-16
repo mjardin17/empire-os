@@ -42,3 +42,8 @@ data/
 # IDE
 .vscode/settings.json
 .idea/
+
+# Empire OS server runtime data
+.empire-data/
+next-env.d.ts
+*.tsbuildinfo

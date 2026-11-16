@@ -30,6 +30,15 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Core tests
+        run: pnpm test
+
+      - name: Web build
+        run: pnpm --filter @empire-os/web build
+
+      - name: Server boot smoke check
+        run: pnpm smoke:server
+
   api-validate:
     runs-on: ubuntu-latest
     steps:

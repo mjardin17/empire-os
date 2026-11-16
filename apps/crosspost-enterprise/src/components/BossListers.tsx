@@ -1,258 +1,292 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  Sparkles, Award, Star, ListChecks, DollarSign, RefreshCw, Send, ShieldCheck, Tag, Play, Settings
+  Award, RefreshCw, AlertTriangle, CheckCircle2, PlugZap, Package, Store, PlusCircle, KeyRound,
 } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
+
+// The panel talks to the Empire OS server, which proxies /bosslisters/* to the Boss Listers app
+// (BOSSLISTERS_BASE_URL on the server, default http://localhost:3001). Posting to selling sites
+// stays in Boss Listers: from here you can only read the stock list and add an unlisted draft.
+
+type Connection =
+  | { state: "checking" }
+  | { state: "empire-offline"; detail: string }
+  | { state: "app-down"; url?: string; detail: string }
+  | { state: "connected"; url: string; problems: string[] };
+
+interface StageInfo { id: string; label: string }
+interface Listing {
+  sku: string; title: string; price: number | null; quantity: number | null; condition: string | null;
+  status: string; source: string; image_url: string | null; updated_at: string | null; stage: string; missing: string[];
+}
+interface Platform { marketplace: string; credsPresent: boolean; missing: string[] }
+
+async function fetchJson(url: string, init?: RequestInit, timeoutMs = 8000): Promise<{ status: number; body: any }> {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...init, signal: ctrl.signal });
+    const body = await res.json().catch(() => null);
+    return { status: res.status, body };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const money = (n: number | null) => (n == null ? "—" : `$${Number(n).toFixed(2)}`);
+const formatDate = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : "—");
+const STAGE_STYLE: Record<string, string> = {
+  intake: "text-amber-300 border-amber-900/50",
+  needs_review: "text-sky-300 border-sky-900/50",
+  ready: "text-emerald-300 border-emerald-900/50",
+  listed: "text-violet-300 border-violet-900/50",
+  sold: "text-slate-400 border-zinc-700",
+  archived: "text-slate-500 border-zinc-800",
+};
 
 export default function BossListers() {
-  const [productName, setProductName] = useState<string>("Empire OS - Custom Local Workspace Suite");
-  const [targetPrice, setTargetPrice] = useState<string>("$9,850 one-off licensing fee");
-  const [nicheCategory, setNicheCategory] = useState<string>("Enterprise SaaS Infrastructure");
-  const [productFeatures, setProductFeatures] = useState<string>("Local offline model routing, GitHub multi-repo continuous tech debt analyzer, real-time yield optimizer dashboard.");
-  const [copyTone, setCopyTone] = useState<string>("Authority & Trust");
+  const [connection, setConnection] = useState<Connection>({ state: "checking" });
+  const [loading, setLoading] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [stages, setStages] = useState<StageInfo[]>([]);
+  const [summary, setSummary] = useState<Record<string, { items: number; units: number }>>({});
+  const [total, setTotal] = useState(0);
+  const [items, setItems] = useState<Listing[]>([]);
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
 
-  const [loading, setLoading] = useState<boolean>(false);
-  const [optimizedListing, setOptimizedListing] = useState<any | null>(null);
+  const [title, setTitle] = useState("");
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("1");
+  const [condition, setCondition] = useState("");
+  const [checkOnly, setCheckOnly] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [addResult, setAddResult] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const handleOptimizeListing = () => {
-    if (!productName.trim()) return;
+  const refresh = useCallback(async () => {
     setLoading(true);
-    setOptimizedListing(null);
+    setListError(null);
 
-    // Simulate sales copywriting AI logic
-    setTimeout(() => {
-      setOptimizedListing({
-        headlines: [
-          "Stop Paying Cloud Rents: Own Your Business Intelligence Layer with Empire OS",
-          "The Self-Auditing Cognitive Operating System Built for High-Scale Founders"
-        ],
-        bossBullets: [
-          { label: "LOCAL DISPATCH SPEED", text: "Zero network latency routing. Runs deepseek-r1 locally over standard hardware pools, slashing monthly cloud tokens bill by 85%." },
-          { label: "AUTOMATED MODERNIZATION SWEEPS", text: "Empire Inspector runs continuously in background. Instantly flags tech-debt, pinpoints duplicate layers, and recommends code cleanup vectors." },
-          { label: "MULTI-CHANNEL INGRESS PIPELINE", text: "Allows simultaneous deployment to X/Twitter, LinkedIn, and WordPress with zero staging. Keep social channels synced 24/7." }
-        ],
-        metaTags: {
-          title: "Empire OS | Local Cognitive Infrastructure for High-Ticket Businesses",
-          description: "Maximize operational throughput and reduce licensing costs. Audit codebases, optimize copywriting hooks, and leverage local LLMs locally with our all-in-one system.",
-          keywords: "SaaS infrastructure, local LLM routing, technical debt optimizer, high-ticket copywriting tools, local AI models"
-        },
-        pricingModels: [
-          { tier: "ENTERPRISE ONE-OFF", price: "$9,850", detail: "Permanent local license. Includes 12 months priority security patches and source-code integration access." },
-          { tier: "MANAGED CLOUD NODE", price: "$1,450/mo", detail: "Zero hardware required. We host and manage your local Ollama clusters on isolated Cloud Run instances." }
-        ],
-        salesFunnel: [
-          { step: "1. COGNITIVE HOOK (Ingress)", action: "Promote the 'Local Tech-Debt Audit Report' via automated LinkedIn post with real technical indicators." },
-          { step: "2. INTERACTIVE DEMO (Value Delivery)", action: "Drop the leads into the Empire Inspector playground page to show them their repository's actual code duplications." },
-          { step: "3. HIGH-TICKET CLOSE (Conversion)", action: "Present the One-Off licensing model with an instant cost-savings calculator compared to Claude API rents." }
-        ]
-      });
+    // 1. Is Empire OS up, and does it see Boss Listers?
+    let appUrl = "";
+    let problems: string[] = [];
+    try {
+      const { status, body } = await fetchJson(`${EMPIRE_OS}/health`);
+      if (status !== 200 || !body) throw new Error(`Empire OS answered HTTP ${status}`);
+      const bl = body.modules?.bosslisters;
+      if (!bl) {
+        setConnection({ state: "app-down", detail: "This Empire OS server has no bosslisters module loaded. Update and restart it." });
+        setLoading(false);
+        return;
+      }
+      appUrl = bl.details?.url || "";
+      if (bl.status === "unhealthy" || bl.details?.httpStatus) {
+        setConnection({ state: "app-down", url: appUrl, detail: bl.details?.reason || `Boss Listers reported ${bl.status}` });
+        setItems([]); setPlatforms([]); setSummary({}); setTotal(0);
+        setLoading(false);
+        return;
+      }
+      problems = bl.details?.app?.details?.problems || [];
+    } catch (err: any) {
+      setConnection({ state: "empire-offline", detail: err?.name === "AbortError" ? "timed out" : String(err?.message || err) });
+      setItems([]); setPlatforms([]); setSummary({}); setTotal(0);
       setLoading(false);
-    }, 1300);
+      return;
+    }
+    setConnection({ state: "connected", url: appUrl, problems });
+
+    // 2. Stock list and selling-site setup, through Empire OS.
+    try {
+      const [listings, plats] = await Promise.all([
+        fetchJson(`${EMPIRE_OS}/bosslisters/empire/listings?limit=12`),
+        fetchJson(`${EMPIRE_OS}/bosslisters/empire/platforms`),
+      ]);
+      if (listings.status === 502) {
+        setConnection({ state: "app-down", url: appUrl, detail: listings.body?.detail || "Boss Listers did not answer" });
+        return;
+      }
+      if (listings.status !== 200 || !listings.body?.ok) {
+        setListError(listings.body?.error || `Boss Listers answered HTTP ${listings.status}`);
+        setItems([]); setSummary({}); setTotal(0);
+      } else {
+        setStages(listings.body.stages || []);
+        setSummary(listings.body.summary || {});
+        setTotal(listings.body.total || 0);
+        setItems(listings.body.items || []);
+      }
+      setPlatforms(plats.status === 200 && plats.body?.ok ? plats.body.platforms || [] : []);
+    } catch (err: any) {
+      setListError(err?.name === "AbortError" ? "Loading the stock list timed out" : String(err?.message || err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  const handleAdd = async () => {
+    if (!title.trim()) return;
+    setAdding(true);
+    setAddResult(null);
+    try {
+      const { status, body } = await fetchJson(`${EMPIRE_OS}/bosslisters/empire/stock/add`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: title.trim(), price: price === "" ? undefined : Number(price), quantity: Number(quantity || 1), condition: condition.trim() || undefined, dryRun: checkOnly }),
+      }, 15000);
+      if (status === 502) {
+        setAddResult({ ok: false, message: "Boss Listers is not running, so nothing was added." });
+      } else if (!body?.ok) {
+        setAddResult({ ok: false, message: body?.error || `Boss Listers answered HTTP ${status}` });
+      } else if (body.dryRun) {
+        setAddResult({ ok: true, message: `Looks good: "${body.wouldCreate.title}" would be saved as an unlisted draft (stage: ${body.wouldCreate.stage}). Check only, so nothing was saved.` });
+      } else {
+        setAddResult({ ok: true, message: `Added "${body.item.title}" (${body.item.sku}) to your stock list as an unlisted draft. Nothing was posted to any selling site.` });
+        setTitle(""); setPrice(""); setQuantity("1"); setCondition("");
+        refresh();
+      }
+    } catch (err: any) {
+      setAddResult({ ok: false, message: `Could not reach Empire OS at ${EMPIRE_OS}: ${err?.message || err}` });
+    } finally {
+      setAdding(false);
+    }
   };
 
+  const connected = connection.state === "connected";
+  const input = "w-full bg-zinc-950 border border-zinc-800 rounded px-2.5 py-1.5 text-xs font-mono text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-700";
+
   return (
-    <div className="bg-zinc-900 border border-zinc-850 rounded-xl p-5 space-y-6 animate-fade-in font-sans">
-      
-      {/* Header */}
-      <div className="border-b border-zinc-850 pb-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <Award className="w-5 h-5 text-emerald-400" />
-            <h3 className="text-sm font-mono font-black text-slate-200 uppercase tracking-tight">
-              Boss Listers Listing Optimizer
-            </h3>
-          </div>
-          <span className="text-[9px] font-mono font-bold text-emerald-400 bg-emerald-950/40 border border-emerald-900/30 px-2 py-0.5 rounded">
-            CONVERSION COPYWRITER
-          </span>
+    <div className="bg-zinc-900 border border-zinc-850 rounded-xl p-5 space-y-5 animate-fade-in font-sans" data-testid="bosslisters-panel">
+      <div className="flex justify-between items-center border-b border-zinc-850 pb-4">
+        <div className="flex items-center gap-2">
+          <Award className="w-5 h-5 text-emerald-400" />
+          <h3 className="text-sm font-mono font-black text-slate-200 uppercase tracking-tight">Boss Listers</h3>
+          <span className="text-[10px] font-mono text-slate-500">stock list · selling sites</span>
         </div>
-        <p className="text-xs text-slate-400 mt-1">
-          Generate premium headlines, dynamic benefit-focused bullet structures, optimized SEO meta tags, and high-ticket pricing models built on tested conversion methodologies.
-        </p>
+        <button onClick={refresh} disabled={loading} className="flex items-center gap-1.5 text-[11px] font-mono px-2.5 py-1 rounded border border-zinc-800 text-slate-300 hover:bg-zinc-800 disabled:opacity-50">
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Refresh
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* Left Col: Product Information */}
-        <div className="lg:col-span-5 bg-zinc-950/50 border border-zinc-850 rounded-lg p-5 space-y-4">
-          <div className="space-y-1">
+      {/* Connection */}
+      <div data-testid="bosslisters-connection">
+        {connection.state === "checking" && (
+          <div className="flex items-center gap-2 text-xs font-mono text-slate-400"><RefreshCw className="w-4 h-4 animate-spin" /> Checking Empire OS at {EMPIRE_OS}…</div>
+        )}
+        {connection.state === "empire-offline" && (
+          <div className="flex gap-2 text-xs font-mono text-red-300 bg-red-950/30 border border-red-900/50 rounded-lg p-3">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            <div>
+              <div className="font-bold">Empire OS is not reachable at {EMPIRE_OS}</div>
+              <div className="text-red-300/80">{connection.detail}. Start it with <code>pnpm start</code> (port 4000), or set VITE_EMPIRE_OS_URL.</div>
+            </div>
+          </div>
+        )}
+        {connection.state === "app-down" && (
+          <div className="flex gap-2 text-xs font-mono text-amber-300 bg-amber-950/30 border border-amber-900/50 rounded-lg p-3">
+            <PlugZap className="w-4 h-4 shrink-0" />
+            <div>
+              <div className="font-bold">Boss Listers is not connected{connection.url ? ` (${connection.url})` : ""}</div>
+              <div className="text-amber-300/80">{connection.detail}. Start Boss Listers (<code>npm run dev</code>, port 3001) or set BOSSLISTERS_BASE_URL on the Empire OS server.</div>
+            </div>
+          </div>
+        )}
+        {connected && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs font-mono text-emerald-300">
+              <CheckCircle2 className="w-4 h-4" /> Boss Listers connected at {connection.url} via Empire OS {EMPIRE_OS}
+            </div>
+            {connection.problems.length > 0 && (
+              <div className="flex gap-2 text-[11px] font-mono text-amber-300/90 bg-amber-950/20 border border-amber-900/40 rounded p-2">
+                <KeyRound className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                <div>Not fully set up: {connection.problems.join("; ")}. Set the same value as EMPIRE_SHARED_KEY (Boss Listers) and BOSSLISTERS_EMPIRE_KEY (Empire OS).</div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {connected && listError && (
+        <div className="text-xs font-mono text-red-300 bg-red-950/30 border border-red-900/50 rounded p-2.5">Stock list: {listError}</div>
+      )}
+
+      {/* Stage totals */}
+      {connected && !listError && (
+        <div className="grid grid-cols-3 md:grid-cols-6 gap-2" data-testid="bosslisters-stages">
+          {(stages.length ? stages : Object.keys(summary).map((id) => ({ id, label: id }))).map((s) => (
+            <div key={s.id} className={`bg-zinc-950/60 border rounded-lg p-2.5 ${STAGE_STYLE[s.id] || "border-zinc-800 text-slate-300"}`}>
+              <div className="text-[10px] font-mono uppercase tracking-wider opacity-80">{s.label}</div>
+              <div className="text-lg font-mono font-black">{summary[s.id]?.items ?? 0}</div>
+              <div className="text-[10px] font-mono opacity-70">{summary[s.id]?.units ?? 0} units</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Newest items */}
+        <div className="lg:col-span-2 bg-zinc-950/50 border border-zinc-850 rounded-lg p-4 space-y-2">
+          <h4 className="text-xs font-mono font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+            <Package className="w-4 h-4 text-zinc-500" /> Newest items {connected && !listError && `(${items.length} of ${total})`}
+          </h4>
+          {connected && !loading && !listError && items.length === 0 && <div className="text-xs font-mono text-slate-500">Your stock list is empty.</div>}
+          <ul className="space-y-1.5 max-h-80 overflow-auto" data-testid="bosslisters-items">
+            {items.map((i) => (
+              <li key={i.sku} className="flex items-center gap-2.5 text-[11px] font-mono bg-zinc-900 border border-zinc-850 rounded px-2.5 py-1.5">
+                {i.image_url ? <img src={i.image_url} alt="" className="w-8 h-8 rounded object-cover shrink-0" /> : <div className="w-8 h-8 rounded bg-zinc-800 shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <div className="text-slate-200 truncate">{i.title}</div>
+                  <div className="text-slate-500 truncate">{i.sku} · {i.source} · {formatDate(i.updated_at)}{i.stage === "intake" && i.missing?.length ? ` · needs ${i.missing.join(", ")}` : ""}</div>
+                </div>
+                <span className="text-slate-300 shrink-0">{money(i.price)} × {i.quantity ?? 0}</span>
+                <span className={`px-1.5 py-0.5 rounded border shrink-0 ${STAGE_STYLE[i.stage] || "border-zinc-700 text-slate-300"}`}>{i.stage.replace("_", " ")}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="space-y-4">
+          {/* Selling sites */}
+          <div className="bg-zinc-950/50 border border-zinc-850 rounded-lg p-4 space-y-2">
             <h4 className="text-xs font-mono font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-              <Settings className="w-4 h-4 text-zinc-500" />
-              Listing Parameters
+              <Store className="w-4 h-4 text-zinc-500" /> Selling sites
             </h4>
-            <p className="text-[10px] text-slate-500 font-sans font-medium">Input your product details to fine-tune sales conversions.</p>
+            {connected && platforms.length === 0 && <div className="text-[11px] font-mono text-slate-500">Not available.</div>}
+            <div className="flex flex-wrap gap-1.5" data-testid="bosslisters-platforms">
+              {platforms.map((p) => (
+                <span key={p.marketplace} title={p.credsPresent ? "Credentials set" : `Missing: ${p.missing.join(", ")}`}
+                  className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${p.credsPresent ? "text-emerald-300 border-emerald-900/50" : "text-slate-500 border-zinc-800"}`}>
+                  {p.credsPresent ? "●" : "○"} {p.marketplace.replace("_", " ")}
+                </span>
+              ))}
+            </div>
+            <div className="text-[10px] font-mono text-slate-600">Credentials set or not. No live calls; posting happens in Boss Listers.</div>
           </div>
 
-          <div className="space-y-3.5 pt-2">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">Product / Service Name</label>
-              <input
-                type="text"
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-850 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none"
-              />
+          {/* Add a draft */}
+          <div className="bg-zinc-950/50 border border-zinc-850 rounded-lg p-4 space-y-2">
+            <h4 className="text-xs font-mono font-black text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <PlusCircle className="w-4 h-4 text-zinc-500" /> Add to stock list
+            </h4>
+            <input className={input} placeholder="Item name" value={title} onChange={(e) => setTitle(e.target.value)} disabled={!connected} />
+            <div className="grid grid-cols-3 gap-2">
+              <input className={input} placeholder="Price" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} disabled={!connected} />
+              <input className={input} placeholder="Qty" inputMode="numeric" value={quantity} onChange={(e) => setQuantity(e.target.value)} disabled={!connected} />
+              <input className={input} placeholder="Condition" value={condition} onChange={(e) => setCondition(e.target.value)} disabled={!connected} />
             </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-mono font-bold text-slate-400 uppercase">Target Price Tag</label>
-                <input
-                  type="text"
-                  value={targetPrice}
-                  onChange={(e) => setTargetPrice(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-mono font-bold text-slate-400 uppercase">Product Niche</label>
-                <input
-                  type="text"
-                  value={nicheCategory}
-                  onChange={(e) => setNicheCategory(e.target.value)}
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-mono font-bold text-slate-400 uppercase">Core Features / Highlights</label>
-              <textarea
-                value={productFeatures}
-                onChange={(e) => setProductFeatures(e.target.value)}
-                placeholder="Identify features to rewrite..."
-                className="w-full bg-zinc-950 border border-zinc-850 rounded p-2.5 text-xs font-mono text-slate-200 placeholder-slate-750 min-h-[90px] focus:outline-none focus:border-zinc-700 leading-relaxed"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-mono font-bold text-slate-400 uppercase">Output Tone Target</label>
-              <select
-                value={copyTone}
-                onChange={(e) => setCopyTone(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-850 rounded p-2 text-xs font-mono text-slate-200 focus:outline-none"
-              >
-                <option value="Authority & Trust">Authority & Trust</option>
-                <option value="High Urgency & Punchy">High Urgency & Punchy</option>
-                <option value="Scientific & Logical">Scientific & Logical</option>
-                <option value="Indirect & Story-driven">Indirect & Story-driven</option>
-              </select>
-            </div>
-
-            <button
-              onClick={handleOptimizeListing}
-              disabled={loading || !productName.trim()}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs font-bold uppercase tracking-wider py-2.5 px-4 rounded-md cursor-pointer transition flex justify-center items-center gap-1.5 disabled:opacity-50 shadow-md"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                  REWRITING SALES MATRIX...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4" />
-                  GENERATE HIGH-TICKET LISTING
-                </>
-              )}
+            <label className="flex items-center gap-2 text-[11px] font-mono text-slate-400">
+              <input type="checkbox" checked={checkOnly} onChange={(e) => setCheckOnly(e.target.checked)} /> Check only (save nothing)
+            </label>
+            <button onClick={handleAdd} disabled={!connected || adding || !title.trim()}
+              className="w-full text-xs font-mono font-bold px-3 py-1.5 rounded bg-emerald-700/80 hover:bg-emerald-600 text-white disabled:opacity-40">
+              {adding ? "Working…" : checkOnly ? "Check item" : "Add as unlisted draft"}
             </button>
+            <div className="text-[10px] font-mono text-slate-600">Saved as a draft in Boss Listers' stock list. Never posted to a selling site.</div>
+            {addResult && (
+              <div className={`text-[11px] font-mono rounded p-2 border ${addResult.ok ? "text-emerald-300 border-emerald-900/50 bg-emerald-950/20" : "text-red-300 border-red-900/50 bg-red-950/20"}`}>{addResult.message}</div>
+            )}
           </div>
         </div>
-
-        {/* Right Col: Listing Outputs */}
-        <div className="lg:col-span-7 space-y-4">
-          
-          {optimizedListing ? (
-            <div className="space-y-4 animate-fade-in">
-              
-              {/* Headlines */}
-              <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-4 space-y-2.5">
-                <span className="text-[9px] font-mono text-emerald-400 uppercase block font-bold">Optimized Conversion Headlines</span>
-                <div className="space-y-2">
-                  {optimizedListing.headlines.map((headline: string, i: number) => (
-                    <div key={i} className="bg-zinc-900 p-3 border border-zinc-850 rounded text-xs flex gap-2 items-start font-sans">
-                      <Star className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                      <strong className="text-slate-200 leading-relaxed">{headline}</strong>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Boss Bullets */}
-              <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-4 space-y-3">
-                <span className="text-[9px] font-mono text-emerald-400 uppercase block font-bold">The "Boss Bullets" Copywriting Framework</span>
-                <div className="space-y-2">
-                  {optimizedListing.bossBullets.map((bullet: any, i: number) => (
-                    <div key={i} className="bg-zinc-900 p-3 border border-zinc-850 rounded text-xs space-y-1 font-sans">
-                      <div className="flex items-center gap-1.5 text-[10px] font-mono font-bold text-emerald-400">
-                        <ListChecks className="w-3.5 h-3.5" />
-                        <span>{bullet.label}</span>
-                      </div>
-                      <p className="text-slate-350 leading-relaxed pl-5">{bullet.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pricing & Funnel Matrix */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                
-                {/* Pricing */}
-                <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-4 space-y-2">
-                  <span className="text-[9px] font-mono text-emerald-400 uppercase block font-bold">Structured Pricing Models</span>
-                  <div className="space-y-2">
-                    {optimizedListing.pricingModels.map((price: any, i: number) => (
-                      <div key={i} className="bg-zinc-900 p-2.5 rounded border border-zinc-850 text-xs font-mono">
-                        <div className="flex justify-between items-center text-slate-200 font-bold">
-                          <span className="truncate max-w-[110px]">{price.tier}</span>
-                          <span className="text-emerald-400">{price.price}</span>
-                        </div>
-                        <p className="text-slate-500 text-[10px] font-sans mt-1 leading-snug">{price.detail}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Funnel */}
-                <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-4 space-y-2">
-                  <span className="text-[9px] font-mono text-emerald-400 uppercase block font-bold">3-Step Sales Funnel Blueprint</span>
-                  <div className="space-y-2">
-                    {optimizedListing.salesFunnel.map((funnel: any, i: number) => (
-                      <div key={i} className="bg-zinc-900 p-2.5 rounded border border-zinc-850 text-xs font-sans">
-                        <span className="font-mono text-[9px] font-bold text-indigo-400 block">{funnel.step}</span>
-                        <p className="text-slate-350 text-[10.5px] mt-0.5 leading-relaxed">{funnel.action}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-              </div>
-
-              {/* SEO Meta Tags */}
-              <div className="bg-zinc-950 border border-zinc-850 rounded-lg p-4 space-y-2 text-xs font-mono">
-                <span className="text-[9px] font-mono text-emerald-400 uppercase block font-bold">SEO & Metadata Headers</span>
-                <div className="bg-zinc-900 p-2.5 rounded border border-zinc-850 space-y-1.5 text-slate-400">
-                  <p>Title: <strong className="text-slate-300 font-sans">{optimizedListing.metaTags.title}</strong></p>
-                  <p>Description: <span className="text-slate-350 text-[11px] font-sans block mt-0.5 leading-relaxed">{optimizedListing.metaTags.description}</span></p>
-                  <p>Keywords: <span className="text-[10px] text-zinc-500 block mt-0.5">{optimizedListing.metaTags.keywords}</span></p>
-                </div>
-              </div>
-
-            </div>
-          ) : (
-            <div className="bg-zinc-950/20 border border-dashed border-zinc-850 rounded-lg p-12 text-center space-y-3 min-h-[360px] flex flex-col justify-center items-center">
-              <Award className="w-10 h-10 text-slate-700 animate-pulse" />
-              <h4 className="text-xs font-mono font-bold text-slate-400 uppercase">Optimizer Frame Empty</h4>
-              <p className="text-[11px] text-slate-500 max-w-sm font-sans">
-                Type your high-ticket service parameters, specify features, and trigger the copy optimization parser to output fullheadlines, pricing, and funnels.
-              </p>
-            </div>
-          )}
-
-        </div>
-
       </div>
-
     </div>
   );
 }

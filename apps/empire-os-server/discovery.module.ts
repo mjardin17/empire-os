@@ -246,7 +246,7 @@ const HTML = `<!DOCTYPE html>
 <div class="toast" id="toast"></div>
 
 <script>
-const EMPIRE = 'http://localhost:3001'
+const EMPIRE = location.origin
 const OLLAMA = 'http://localhost:11434'
 let catalog = [], installed = [], benchmarks = {}
 

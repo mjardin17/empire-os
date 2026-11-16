@@ -1,13 +1,14 @@
 /**
  * DiscoveryEngine — Phase 3 React UI
  * Full discovery catalog with search, filters, quality scores, and install prompts.
- * Calls: GET http://localhost:3001/discovery-engine/all
+ * Calls: GET <Empire OS>/discovery-engine/all (URL from src/lib/empireOs.ts)
  * Falls back to mock data when backend unavailable.
  * NEVER installs automatically — copy-to-clipboard pattern only.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { Search, Star, Download, Cpu, HardDrive, RefreshCw, ExternalLink, Copy, CheckCircle } from 'lucide-react'
+import { EMPIRE_OS } from "../lib/empireOs";
 
 interface DiscoveryItem {
   id: string
@@ -91,7 +92,7 @@ export default function DiscoveryEngine() {
     try {
       const controller = new AbortController()
       setTimeout(() => controller.abort(), 6000)
-      const res = await fetch('http://localhost:3001/discovery-engine/all', { signal: controller.signal })
+      const res = await fetch(`${EMPIRE_OS}/discovery-engine/all`, { signal: controller.signal })
       if (!res.ok) throw new Error('non-ok')
       const data = await res.json() as { entries: DiscoveryItem[]; lastFullScan: string }
       setItems(data.entries ?? MOCK)
@@ -108,7 +109,7 @@ export default function DiscoveryEngine() {
   const triggerScan = async () => {
     setScanning(true)
     try {
-      await fetch('http://localhost:3001/discovery-engine/scan', { method: 'POST' })
+      await fetch(`${EMPIRE_OS}/discovery-engine/scan`, { method: 'POST' })
       setTimeout(() => { load(); setScanning(false) }, 5000)
     } catch {
       setScanning(false)

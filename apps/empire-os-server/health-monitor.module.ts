@@ -37,14 +37,17 @@ interface ServiceDef {
   repairHint: string
 }
 
+// Empire OS's own port (default 4000; Boss Listers keeps 3001).
+const EMPIRE_PORT = Number(process.env.PORT ?? 4000)
+
 const SERVICES: ServiceDef[] = [
-  { id:'empire',      name:'Empire OS',      icon:'🏛️', url:'http://localhost:3001/health', port:3001, critical:true,  category:'empire', repairHint:'Restart: npx tsx server.ts' },
+  { id:'empire',      name:'Empire OS',      icon:'🏛️', url:`http://localhost:${EMPIRE_PORT}/health`, port:EMPIRE_PORT, critical:true,  category:'empire', repairHint:'Restart: npx tsx server.ts' },
   { id:'ollama',      name:'Ollama',         icon:'🦙', url:'http://localhost:11434/api/tags', port:11434, critical:true,  category:'ai',     repairHint:'Run: ollama serve' },
   { id:'comfyui',     name:'ComfyUI',        icon:'⚙️', url:'http://localhost:8188/',         port:8188,  critical:false, category:'tool',   repairHint:'Start ComfyUI: python main.py' },
   { id:'sd-webui',    name:'Stable Diffusion (A1111)', icon:'🎨', url:'http://localhost:7860/', port:7860, critical:false, category:'tool', repairHint:'Start Automatic1111 webui.bat' },
   { id:'lmstudio',    name:'LM Studio',      icon:'🔧', url:'http://localhost:1234/v1/models', port:1234, critical:false, category:'ai',    repairHint:'Open LM Studio and start local server' },
   { id:'open-webui',  name:'Open WebUI',     icon:'💬', url:'http://localhost:3000/',          port:3000,  critical:false, category:'tool',   repairHint:'docker run -p 3000:8080 ghcr.io/open-webui/open-webui' },
-  { id:'crosspost',   name:'CrossPost',      icon:'📢', url:'http://localhost:3001/crosspost-enterprise/health', port:3001, critical:false, category:'empire', repairHint:'Module runs inside Empire OS server' },
+  { id:'crosspost',   name:'CrossPost',      icon:'📢', url:`http://localhost:${EMPIRE_PORT}/crosspost-enterprise/health`, port:EMPIRE_PORT, critical:false, category:'empire', repairHint:'Module runs inside Empire OS server' },
 ]
 
 // ── Event log ─────────────────────────────────────────────────────────────────
@@ -272,7 +275,7 @@ const HTML = `<!DOCTYPE html>
 </div>
 
 <script>
-const EMPIRE = 'http://localhost:3001'
+const EMPIRE = location.origin
 const OLLAMA = 'http://localhost:11434'
 let refreshTimer
 

@@ -210,7 +210,7 @@ const HTML = `<!DOCTYPE html>
 
 <script>
 const OLLAMA = 'http://localhost:11434'
-const EMPIRE = 'http://localhost:3001'
+const EMPIRE = location.origin
 let installedModels = []
 
 function toast(msg, type='success') {

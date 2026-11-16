@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Cpu, Play, RefreshCw, Award, Clock, HardDrive, Zap } from "lucide-react";
+import { EMPIRE_OS } from "../lib/empireOs";
 
-const EMPIRE_OS = "http://localhost:3001";
 
 type ModelEntry = {
   id: string;

@@ -92,7 +92,7 @@ empire-os/
 │   ├── empire_server.py         ← Python FastAPI (port 8002), empire hooks, render API
 │   ├── empire-module/           ← VideoPipelineModule extends BaseModule
 │   └── README.md
-├── apps/empire-os-server/       ← HTTP SERVER ✅ BUILT — boots all services + modules, port 3001
+├── apps/empire-os-server/       ← HTTP SERVER ✅ BUILT — boots all services + modules, port 4000 (PORT; moved off Boss Listers' 3001)
 │   ├── server.ts                ← Entry point (Node built-in http, no Express needed)
 │   ├── package.json             ← tsx + dotenv deps
 │   └── adapters/
@@ -132,15 +132,15 @@ Bootstrap: `import { bootstrap } from '@empire-os/core'`
 | CrossPost Enterprise | `crosspost-enterprise` | Node.js/TypeScript | 3000 | ✅ ACTIVE — empire hooks + CrossPostModule integrated |
 | Video Bot Pipeline | `video-pipeline` | Python (FastAPI) | 8002 | ✅ ACTIVE — empire_server.py + VideoPipelineModule built |
 | Boss Listers | (plugin panel inside CrossPost) | React component in CrossPost | N/A | ✅ CLOSED — BossListers.tsx UI panel; no separate service needed |
-| Empire Assistant | `empire-assistant` | TypeScript (in-process) | 3001 | ✅ BUILT — runs inside empire-os-server, no separate port |
-| Model Manager | `model-manager` | TypeScript (in-process) | 3001 | ✅ BUILT — graphical Ollama model browser at /model-manager/ |
-| Discovery | `discovery` | TypeScript (in-process) | 3001 | ✅ BUILT — AI catalog, HF/GitHub trending, HW compat, benchmark at /discovery/ |
-| Health Monitor | `health-monitor` | TypeScript (in-process) | 3001 | ✅ BUILT — service status, RAM/CPU/disk, event log at /health-monitor/ |
-| Media Engine | `media-engine` | TypeScript (in-process) | 3001 | ✅ BUILT — video/image/audio/music routing + detection at /media-engine/ |
-| Knowledge Base | `knowledge-base` | TypeScript (in-process) | 3001 | ✅ BUILT — persistent memory store at /knowledge-base/ |
-| Empire Dashboard | `empire-dashboard` | TypeScript (in-process) | 3001 | ✅ BUILT — glassmorphism SPA, all modules unified at / (redirects here) |
-| Empire Store | `store` | TypeScript (in-process) | 3001 | ✅ BUILT — 40+ items: AI models, video, image, voice, ocr, dev tools at /store/ |
-| Empire Installer | `installer` | TypeScript (in-process) | 3001 | ✅ BUILT — pip/npm/winget/ollama installer at /installer/ |
+| Empire Assistant | `empire-assistant` | TypeScript (in-process) | 4000 | ✅ BUILT — runs inside empire-os-server, no separate port |
+| Model Manager | `model-manager` | TypeScript (in-process) | 4000 | ✅ BUILT — graphical Ollama model browser at /model-manager/ |
+| Discovery | `discovery` | TypeScript (in-process) | 4000 | ✅ BUILT — AI catalog, HF/GitHub trending, HW compat, benchmark at /discovery/ |
+| Health Monitor | `health-monitor` | TypeScript (in-process) | 4000 | ✅ BUILT — service status, RAM/CPU/disk, event log at /health-monitor/ |
+| Media Engine | `media-engine` | TypeScript (in-process) | 4000 | ✅ BUILT — video/image/audio/music routing + detection at /media-engine/ |
+| Knowledge Base | `knowledge-base` | TypeScript (in-process) | 4000 | ✅ BUILT — persistent memory store at /knowledge-base/ |
+| Empire Dashboard | `empire-dashboard` | TypeScript (in-process) | 4000 | ✅ BUILT — glassmorphism SPA, all modules unified at / (redirects here) |
+| Empire Store | `store` | TypeScript (in-process) | 4000 | ✅ BUILT — 40+ items: AI models, video, image, voice, ocr, dev tools at /store/ |
+| Empire Installer | `installer` | TypeScript (in-process) | 4000 | ✅ BUILT — pip/npm/winget/ollama installer at /installer/ |
 
 ## Registered Connectors (PluginRegistry)
 
@@ -184,7 +184,7 @@ StoryForge uses OpenRouter (routes to same models via one key).
 coding | writing | research | image | video | creative
 Image Pack: llava:34b, llava-llama3:8b, minicpm-v:8b, moondream:1.8b
 Video Pack: video-llava:7b, llava:34b, minicpm-v:8b
-UI: http://localhost:3001/model-manager/ — browse/install/remove/register without terminal
+UI: http://localhost:4000/model-manager/ — browse/install/remove/register without terminal
 
 ## Ports
 

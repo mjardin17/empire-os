@@ -321,7 +321,7 @@ const HTML = `<!DOCTYPE html>
 <div class="panel" id="tab-music"><div class="grid" id="eng-music"></div></div>
 
 <script>
-const EMPIRE = 'http://localhost:3001'
+const EMPIRE = location.origin
 let engines = []
 
 function stars(n, max=10) {

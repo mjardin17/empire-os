@@ -235,7 +235,7 @@ const HTML = `<!DOCTYPE html>
 </div>
 
 <script>
-const EMPIRE = 'http://localhost:3001'
+const EMPIRE = location.origin
 let allEntries = [], currentCat = 'all', currentSearch = ''
 
 const CAT_ICONS = { benchmark:'⚡', preference:'⚙️', workflow:'🔄', project:'📁', discovery:'🔭', note:'📝', failure:'⚠️' }
@@ -361,7 +361,7 @@ export class KnowledgeBaseModule implements EmpireModule {
         channels: ['Gods & Glory (GG)', 'Machine Learning (ML)', 'Little Olympus (LO)'],
         pipeline: 'auto_render.py — JSON scripts → images → TTS → FFmpeg → MP4',
         status: 'S1 complete, S2 partial, S3 scripted — render with render_season3.bat',
-        empire_os_port: 3001,
+        empire_os_port: Number(process.env.PORT ?? 4000),
         ollama_port: 11434,
       }, ['project', 'youtube', 'viral-engine', 'pipeline'])
 

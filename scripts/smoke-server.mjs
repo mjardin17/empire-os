@@ -22,9 +22,12 @@ child.stderr.on('data', (d) => { output += d })
 let exited = false
 child.on('exit', () => { exited = true })
 
-function stop() {
+async function stop() {
   try { process.kill(-child.pid, 'SIGTERM') } catch {}
-  rmSync(dataDir, { recursive: true, force: true })
+  // Wait for the server to exit so it stops writing into dataDir, then clean up best-effort.
+  const exitDeadline = Date.now() + 10000
+  while (!exited && Date.now() < exitDeadline) await new Promise((r) => setTimeout(r, 100))
+  try { rmSync(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }) } catch {}
 }
 
 const deadline = Date.now() + timeoutMs
@@ -34,6 +37,10 @@ while (Date.now() < deadline && !exited) {
     const res = await fetch(url)
     const body = await res.json()
     if (res.ok && body.status === 'online') {
+      if (!body.modules?.storyforge) {
+        console.error('Smoke check failed: /health has no storyforge module')
+        break
+      }
       console.log(`Server answered ${url}: status=${body.status}, modules=${Object.keys(body.modules ?? {}).length}`)
       ok = true
       break
@@ -41,7 +48,7 @@ while (Date.now() < deadline && !exited) {
   } catch { /* not up yet */ }
   await new Promise((r) => setTimeout(r, 1000))
 }
-stop()
+await stop()
 if (!ok) {
   console.error(`Smoke check failed: ${url} did not answer with status "online"${exited ? ' (server exited)' : ''}.`)
   console.error(output.slice(-4000))

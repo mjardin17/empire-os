@@ -6,7 +6,8 @@
  *
  * URL scheme:  http://localhost:PORT/:moduleId/path
  *   empire-assistant  → all AI + agent endpoints
- *   (future)          → crosspost, storyforge, video-pipeline
+ *   storyforge        → Bookmaker book studio (STORYFORGE_BASE_URL, default :3010)
+ *   (future)          → crosspost, video-pipeline
  *
  * Start:  npm start   (or: npx tsx server.ts)
  * Keys:   copy .env.example → .env  then add your API keys
@@ -35,6 +36,8 @@ import { EmpireInstallerModule } from './installer.module.js'
 import { DiscoveryEngineModule } from './discovery-engine.module.js'
 import { BenchmarkEngineModule } from './benchmark-engine.module.js'
 import { SelfImprovementModule } from './self-improvement.module.js'
+// Bookmaker book studio (StoryForge adapter)
+import { StoryForgeModule } from '../storyforge/empire-module/storyforge.module.js'
 import type { EmpireModule } from '@empire-os/core'
 import type { GatewayRequest, HttpMethod } from '@empire-os/core'
 
@@ -226,6 +229,14 @@ async function main(): Promise<void> {
   await selfImprovement.init(services, {})
   modules.set(selfImprovement.moduleId, selfImprovement)
   log(`Module ready: ${selfImprovement.moduleId} — http://${HOST}:${PORT}/self-improvement/`)
+
+  // Bookmaker book studio — proxied at /storyforge/*. Bookmaker runs separately
+  // (STORYFORGE_BASE_URL, default http://localhost:3010); if it is not running the
+  // module reports unhealthy and proxied calls answer 502.
+  const storyforge = new StoryForgeModule()
+  await storyforge.init(services, {})
+  modules.set(storyforge.moduleId, storyforge)
+  log(`Module ready: ${storyforge.moduleId} — http://${HOST}:${PORT}/storyforge/ → ${process.env.STORYFORGE_BASE_URL || 'http://localhost:3010'}`)
 
   // Future modules — add here:
   // const crosspost = new CrossPostModule()

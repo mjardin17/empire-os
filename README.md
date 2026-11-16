@@ -39,16 +39,48 @@ Check the server is up:
 curl http://localhost:4000/health   # → {"status":"online","modules":{...}}
 ```
 
-Use `pnpm start` to run only the server. Set `PORT` to change its port and `EMPIRE_API_KEY` to require an API key (auth is off when it is unset, so only run without it on your own machine).
+Use `pnpm start` to run only the server. Set `PORT` to change its port. To lock the server with a key, see [Lock Empire OS with a key](#lock-empire-os-with-a-key) below (without a key anything on your network can use it, so only run it that way on your own machine).
 
 ### Checks (same as CI)
 ```bash
 pnpm type-check      # core + web TypeScript
 pnpm lint            # web ESLint
 pnpm test            # core unit tests (vitest)
+pnpm test:dashboard  # CrossPost dashboard: Empire key handling
 pnpm --filter @empire-os/web build
-pnpm smoke:server    # boots the server and checks GET /health
+pnpm smoke:server        # boots the server (no key) and checks GET /health
+pnpm smoke:server:key    # same, with EMPIRE_API_KEY set: key, unlock page and CORS
 ```
+
+### Lock Empire OS with a key
+With `EMPIRE_API_KEY` set, the server refuses every request that does not carry the key, except `GET /health`.
+
+1. **Make up a key.** Any long random string works. To generate one:
+   ```bash
+   openssl rand -hex 32
+   # or, without openssl:
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+2. **Put it in `apps/empire-os-server/.env`** (create the file; it is git-ignored, so never commit it):
+   ```
+   EMPIRE_API_KEY=paste-your-key-here
+   ```
+   Restart the server (`pnpm start`). The log says `Auth: ENABLED`.
+3. **Enter it once in the dashboard.** Open CrossPost (http://localhost:3000). A yellow bar says *"Empire OS is locked: enter your Empire key"*. Paste the key and click **Unlock**. This browser remembers it (in its local storage) and sends it with every Empire OS request. Use **change key** or **forget key** in the top bar to change it.
+4. **The server's own pages** (http://localhost:4000/empire-dashboard/, model manager, and so on) show an *"Empire OS is locked"* page. Enter the same key there once; that browser stays unlocked for 30 days (an HttpOnly cookie that holds a hash of the key, not the key).
+
+Scripts and other apps send the key in the `X-Empire-Api-Key` header:
+```bash
+curl -H "X-Empire-Api-Key: $EMPIRE_API_KEY" http://localhost:4000/providers
+```
+
+**Which web pages may call the server.** With a key set, only the CrossPost dashboard (`http://localhost:3000` and `http://127.0.0.1:3000`) may call Empire OS from a browser. If you open the dashboard from another address (for example over Tailscale), list every address in `apps/empire-os-server/.env`, comma-separated:
+```
+EMPIRE_ALLOWED_ORIGINS=http://localhost:3000,http://my-pc.tailnet.ts.net:3000
+```
+Without a key the server allows any origin, as before.
+
+For local use only, you can skip step 3 by putting `VITE_EMPIRE_API_KEY=...` in `apps/crosspost-enterprise/.env`. Vite builds that value into the page's JavaScript, so never use it for a build anyone else can open.
 
 ### Services
 | Service | URL |

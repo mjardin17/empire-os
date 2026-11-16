@@ -11,6 +11,10 @@ beforeAll(async () => {
   vi.unstubAllGlobals()
   server = createServer((req, res) => {
     res.setHeader('content-type', 'application/json')
+    if (req.url === '/echo-key') {
+      res.end(JSON.stringify({ key: req.headers['x-empire-api-key'] ?? null }))
+      return
+    }
     if (req.url === '/echo-source') {
       res.end(JSON.stringify({ source: req.headers['x-source-module'], correlation: req.headers['x-correlation-id'] ? 'set' : 'missing' }))
       return
@@ -43,5 +47,22 @@ describe('ModuleGateway against a real HTTP endpoint', () => {
     await gw.register(descriptor())
     const res = await gw.route({ moduleId: 'real-http-module', path: '/missing', method: 'GET' })
     expect(res.status).toBe(404)
+  })
+
+  it('sends selfHeaders (the Empire key) only to modules on this server', async () => {
+    const gw = new HttpModuleGateway({ selfBaseUrl: baseUrl, selfHeaders: { 'X-Empire-Api-Key': 'k-self' } })
+    await gw.register(descriptor())
+    await gw.register({ ...descriptor(), id: 'elsewhere', baseUrl: baseUrl.replace('127.0.0.1', 'localhost') })
+    const own = await gw.route({ moduleId: 'real-http-module', path: '/echo-key', method: 'GET' })
+    expect(own.body).toEqual({ key: 'k-self' })
+    const other = await gw.route({ moduleId: 'elsewhere', path: '/echo-key', method: 'GET' })
+    expect(other.body).toEqual({ key: null })
+  })
+
+  it('sends no key without the option', async () => {
+    const gw = new HttpModuleGateway()
+    await gw.register(descriptor())
+    const res = await gw.route({ moduleId: 'real-http-module', path: '/echo-key', method: 'GET' })
+    expect(res.body).toEqual({ key: null })
   })
 })

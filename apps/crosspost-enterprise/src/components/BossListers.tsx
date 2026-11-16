@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   Award, RefreshCw, AlertTriangle, CheckCircle2, PlugZap, Package, Store, PlusCircle, KeyRound,
 } from "lucide-react";
-import { EMPIRE_OS } from "../lib/empireOs";
+import { EMPIRE_OS, LOCKED_MESSAGE } from "../lib/empireOs";
 
 // The panel talks to the Empire OS server, which proxies /bosslisters/* to the Boss Listers app
 // (BOSSLISTERS_BASE_URL on the server, default http://localhost:3001). Posting to selling sites
@@ -104,7 +104,10 @@ export default function BossListers() {
         setConnection({ state: "app-down", url: appUrl, detail: listings.body?.detail || "Boss Listers did not answer" });
         return;
       }
-      if (listings.status !== 200 || !listings.body?.ok) {
+      if (listings.status === 401) {
+        setListError(LOCKED_MESSAGE);
+        setItems([]); setSummary({}); setTotal(0);
+      } else if (listings.status !== 200 || !listings.body?.ok) {
         setListError(listings.body?.error || `Boss Listers answered HTTP ${listings.status}`);
         setItems([]); setSummary({}); setTotal(0);
       } else {
@@ -133,7 +136,9 @@ export default function BossListers() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title.trim(), price: price === "" ? undefined : Number(price), quantity: Number(quantity || 1), condition: condition.trim() || undefined, dryRun: checkOnly }),
       }, 15000);
-      if (status === 502) {
+      if (status === 401) {
+        setAddResult({ ok: false, message: LOCKED_MESSAGE });
+      } else if (status === 502) {
         setAddResult({ ok: false, message: "Boss Listers is not running, so nothing was added." });
       } else if (!body?.ok) {
         setAddResult({ ok: false, message: body?.error || `Boss Listers answered HTTP ${status}` });
@@ -253,7 +258,7 @@ export default function BossListers() {
             {connected && platforms.length === 0 && <div className="text-[11px] font-mono text-slate-500">Not available.</div>}
             <div className="flex flex-wrap gap-1.5" data-testid="bosslisters-platforms">
               {platforms.map((p) => (
-                <span key={p.marketplace} title={p.credsPresent ? "Credentials set" : `Missing: ${p.missing.join(", ")}`}
+                <span key={p.marketplace} title={p.credsPresent ? "Credentials set" : `Missing: ${(p.missing || []).join(", ")}`}
                   className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${p.credsPresent ? "text-emerald-300 border-emerald-900/50" : "text-slate-500 border-zinc-800"}`}>
                   {p.credsPresent ? "●" : "○"} {p.marketplace.replace("_", " ")}
                 </span>

@@ -20,7 +20,26 @@ export function isSafeRequestPath(path: string): boolean {
   return !path.split('/').includes('..')
 }
 
+export interface HttpModuleGatewayOptions {
+  /**
+   * Headers added to calls whose target URL starts with selfBaseUrl, i.e. modules served by this
+   * Empire OS server itself. Used to send X-Empire-Api-Key when EMPIRE_API_KEY is set, so internal
+   * calls are not refused. Never sent to any other host.
+   */
+  selfBaseUrl?: string
+  selfHeaders?: Record<string, string>
+}
+
 export class HttpModuleGateway implements ModuleGateway {
+  constructor(private readonly options: HttpModuleGatewayOptions = {}) {}
+
+  /** selfHeaders, only for URLs on this server. */
+  private selfHeadersFor(url: string): Record<string, string> {
+    const base = this.options.selfBaseUrl?.replace(/\/+$/, '')
+    if (!base || !this.options.selfHeaders) return {}
+    return url === base || url.startsWith(base + '/') ? this.options.selfHeaders : {}
+  }
+
   private registry = new Map<string, ModuleDescriptor>()
   private healthCache = new Map<string, { status: ModuleStatus; checkedAt: number }>()
   private readonly HEALTH_TTL_MS = 30_000
@@ -52,7 +71,7 @@ export class HttpModuleGateway implements ModuleGateway {
 
     try {
       const url = `${descriptor.baseUrl}${descriptor.healthPath}`
-      const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
+      const res = await fetch(url, { headers: this.selfHeadersFor(url), signal: AbortSignal.timeout(5000) })
       const status: ModuleStatus = res.ok ? 'healthy' : 'degraded'
       this.healthCache.set(moduleId, { status, checkedAt: Date.now() })
       return status
@@ -100,6 +119,7 @@ export class HttpModuleGateway implements ModuleGateway {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...request.headers,
+      ...this.selfHeadersFor(url),
       'X-Correlation-Id': request.correlationId ?? crypto.randomUUID(),
       'X-Source-Module': 'empire-os-gateway',
     }

@@ -15,7 +15,7 @@ import { FileMemoryBus } from './implementations/file-memory-bus.impl.js'
 import { InProcessEventBus } from './implementations/event-bus.impl.js'
 import { FileEventBus } from './implementations/file-event-bus.impl.js'
 import { DefaultAIRouter } from './implementations/ai-router.impl.js'
-import { HttpModuleGateway } from './implementations/module-gateway.impl.js'
+import { HttpModuleGateway, type HttpModuleGatewayOptions } from './implementations/module-gateway.impl.js'
 import { InMemoryWorkflowEngine } from './implementations/workflow-engine.impl.js'
 import { FileWorkflowEngine } from './implementations/file-workflow-engine.impl.js'
 import type { CoreServices } from './interfaces/empire-module.js'
@@ -30,6 +30,8 @@ export interface BootstrapOptions {
    * Example: '.empire-data'  (relative to CWD) or an absolute path.
    */
   dataDir?: string
+  /** Options for the module gateway (e.g. headers for calls back into this server). */
+  gateway?: HttpModuleGatewayOptions
 }
 
 let _services: CoreServices | null = null
@@ -43,7 +45,7 @@ export async function bootstrap(options: BootstrapOptions = {}): Promise<CoreSer
   const memoryBus     = options.dataDir ? new FileMemoryBus(options.dataDir)    : new InMemoryMemoryBus()
   const eventBus      = options.dataDir ? new FileEventBus(options.dataDir)     : new InProcessEventBus()
   const aiRouter      = new DefaultAIRouter()
-  const moduleGateway = new HttpModuleGateway()
+  const moduleGateway = new HttpModuleGateway(options.gateway)
   const workflowEngine = options.dataDir
     ? new FileWorkflowEngine(moduleGateway, eventBus, options.dataDir)
     : new InMemoryWorkflowEngine(moduleGateway, eventBus)

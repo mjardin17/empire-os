@@ -21,6 +21,7 @@ import ProjectImportCenter from "./components/ProjectImportCenter";
 import StoryForge from "./components/StoryForge";
 import DocumentaryFactory from "./components/DocumentaryFactory";
 import BossListers from "./components/BossListers";
+import EmpireKeyGate from "./components/EmpireKeyGate";
 import DeploymentCenter from "./components/DeploymentCenter";
 import TestingCenter from "./components/TestingCenter";
 import KnowledgeCenter from "./components/KnowledgeCenter";
@@ -1039,6 +1040,7 @@ export default function App() {
 
         {/* Right Main Content Pane */}
         <main className="flex-grow min-w-0 p-6 lg:p-8 space-y-8">
+          <EmpireKeyGate />
 
           {currentWorkspace === "ingress" && (
       <section className="bg-gradient-to-b from-slate-900/60 to-transparent py-8 px-6 border-b border-slate-900">

@@ -42,6 +42,8 @@ import { StoryForgeModule } from '../storyforge/empire-module/storyforge.module.
 // Boss Listers reseller app (remote-app module)
 import { BossListersModule } from './bosslisters.module.js'
 import type { EmpireModule } from '@empire-os/core'
+import { checkRequest, corsAllowOrigin, parseAllowedOrigins, safeNextPath, safeEqual, sessionCookie } from '@empire-os/core'
+import { unlockPage } from './unlock-page.js'
 import type { GatewayRequest, HttpMethod } from '@empire-os/core'
 
 // 4000, not 3001: Boss Listers has used 3001 for a long time (phone, extension, OAuth redirects).
@@ -49,10 +51,12 @@ const PORT      = Number(process.env.PORT ?? 4000)
 const HOST      = process.env.HOST ?? 'localhost'
 const BASE_URL  = `http://${HOST}:${PORT}`
 const DATA_DIR  = process.env.DATA_DIR ?? path.resolve('.empire-data')
-const API_KEY   = process.env.EMPIRE_API_KEY  // undefined = auth disabled (dev mode)
+const API_KEY   = (process.env.EMPIRE_API_KEY ?? '').trim() || undefined  // unset = auth disabled (dev mode)
+// With a key, only these origins may call the server from a browser (CrossPost dashboard by default).
+const ALLOWED_ORIGINS = parseAllowedOrigins(process.env.EMPIRE_ALLOWED_ORIGINS)
 
 // Paths that don't require authentication
-const PUBLIC_PATHS = new Set(['/', '/health'])
+const PUBLIC_PATHS = new Set(['/', '/health', '/unlock', '/lock'])
 
 // ── helpers ────────────────────────────────────────────────────────────────
 
@@ -74,6 +78,48 @@ async function readBody(req: http.IncomingMessage): Promise<unknown> {
   try { return JSON.parse(raw) } catch { return raw }
 }
 
+async function readForm(req: http.IncomingMessage): Promise<URLSearchParams> {
+  const chunks: Buffer[] = []
+  let size = 0
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length
+    if (size > 16_384) break
+    chunks.push(chunk as Buffer)
+  }
+  return new URLSearchParams(Buffer.concat(chunks).toString())
+}
+
+/** GET /unlock shows the form; POST /unlock checks the key and sets the cookie; POST /lock clears it. */
+async function handleUnlock(req: http.IncomingMessage, res: http.ServerResponse, url: URL): Promise<void> {
+  const html = (status: number, body: string, headers: Record<string, string> = {}) => {
+    res.writeHead(status, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', ...headers })
+    res.end(body)
+  }
+  if (!API_KEY) {
+    res.writeHead(302, { Location: '/empire-dashboard/' })
+    res.end()
+    return
+  }
+  if (url.pathname === '/lock') {
+    if (req.method !== 'POST') { html(405, unlockPage({ next: '/' })); return }
+    html(200, unlockPage({ next: '/empire-dashboard/' }), { 'Set-Cookie': sessionCookie(null) })
+    return
+  }
+  if (req.method === 'POST') {
+    const form = await readForm(req)
+    const next = safeNextPath(form.get('next'))
+    if (!safeEqual(form.get('key'), API_KEY)) {
+      html(401, unlockPage({ next, error: 'That key is not right. It must match EMPIRE_API_KEY on the server.' }))
+      return
+    }
+    res.writeHead(303, { Location: next === '/' ? '/empire-dashboard/' : next, 'Set-Cookie': sessionCookie(API_KEY), 'Cache-Control': 'no-store' })
+    res.end()
+    return
+  }
+  const unlocked = checkRequest({ apiKey: API_KEY, path: '/x', headers: req.headers, publicPaths: new Set() }).ok
+  html(200, unlockPage({ next: safeNextPath(url.searchParams.get('next')), unlocked }))
+}
+
 // ── bootstrap ──────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
@@ -81,13 +127,18 @@ async function main(): Promise<void> {
 
   log(`Data directory: ${DATA_DIR}`)
   if (API_KEY) {
-    log('Auth: ENABLED — X-Empire-Api-Key required on all non-public endpoints')
+    log('Auth: ENABLED — X-Empire-Api-Key (or the /unlock browser session) required on all non-public endpoints')
+    log(`CORS: browser calls allowed only from ${ALLOWED_ORIGINS.join(', ')} (EMPIRE_ALLOWED_ORIGINS)`)
   } else {
     log('Auth: DISABLED — set EMPIRE_API_KEY in .env to enable')
   }
 
   // 1. Core services — file-backed persistence (survives restarts)
-  const services = await bootstrap({ dataDir: DATA_DIR })
+  const services = await bootstrap({
+    dataDir: DATA_DIR,
+    // Modules served by this server (e.g. empire-assistant) are called over HTTP too: send the key.
+    gateway: API_KEY ? { selfBaseUrl: BASE_URL, selfHeaders: { 'X-Empire-Api-Key': API_KEY } } : undefined,
+  })
   log('Core services ready (file-backed persistence active).')
 
   // 2. Register AI adapters
@@ -261,26 +312,49 @@ async function main(): Promise<void> {
     const correlationId = (req.headers['x-correlation-id'] as string) ?? crypto.randomUUID()
 
     try {
-      // CORS — allow CrossPost Enterprise (port 3000) to call this server directly
-      res.setHeader('Access-Control-Allow-Origin', '*')
+      // CORS — without a key any origin may call (dev mode, as before). With EMPIRE_API_KEY set,
+      // only the dashboard origins (EMPIRE_ALLOWED_ORIGINS, default http://localhost:3000) may.
+      const origin = typeof req.headers.origin === 'string' ? req.headers.origin : undefined
+      const allowOrigin = corsAllowOrigin({ apiKey: API_KEY, origin, allowedOrigins: ALLOWED_ORIGINS })
+      if (allowOrigin) res.setHeader('Access-Control-Allow-Origin', allowOrigin)
+      if (API_KEY) res.setHeader('Vary', 'Origin')
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Empire-Api-Key, X-Correlation-Id')
       if (req.method === 'OPTIONS') {
-        res.writeHead(204)
+        res.writeHead(allowOrigin ? 204 : 403)
         res.end()
         return
       }
 
-      // Auth check — skip for public paths
-      if (API_KEY && !PUBLIC_PATHS.has(url.pathname)) {
-        const provided = req.headers['x-empire-api-key']
-        if (provided !== API_KEY) {
-          jsonResponse(res, 401, {
-            error: 'Unauthorized',
-            hint: 'Include X-Empire-Api-Key header with your EMPIRE_API_KEY value',
-          })
+      // Unlock / lock for the server's own HTML pages (sets or clears an HttpOnly session cookie).
+      if (url.pathname === '/unlock' || url.pathname === '/lock') {
+        await handleUnlock(req, res, url)
+        return
+      }
+
+      // Auth check — public paths skip it. The key comes in the X-Empire-Api-Key header, or as the
+      // session cookie set by /unlock (the server's own pages).
+      const auth = checkRequest({ apiKey: API_KEY, path: url.pathname, headers: req.headers, publicPaths: PUBLIC_PATHS })
+      if (!auth.ok) {
+        const wantsHtml = req.method === 'GET' && String(req.headers.accept ?? '').includes('text/html')
+        if (wantsHtml) {
+          res.writeHead(302, { Location: `/unlock?next=${encodeURIComponent(url.pathname + url.search)}` })
+          res.end()
           return
         }
+        jsonResponse(res, 401, {
+          error: 'Unauthorized',
+          locked: true,
+          hint: auth.reason === 'wrong'
+            ? 'The Empire key is wrong. Check EMPIRE_API_KEY in apps/empire-os-server/.env.'
+            : 'Send the X-Empire-Api-Key header with your EMPIRE_API_KEY value (the dashboard asks for it once).',
+        })
+        return
+      }
+      // A cookie is sent automatically, so a write that relies on it must come from this server's own pages.
+      if (auth.via === 'cookie' && req.method !== 'GET' && req.method !== 'HEAD' && origin && origin !== `http://${req.headers.host}`) {
+        jsonResponse(res, 403, { error: 'Forbidden: cross-site request' })
+        return
       }
 
       // Server root — redirect to the premium dashboard

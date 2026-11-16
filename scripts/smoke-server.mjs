@@ -2,7 +2,12 @@
 // Boot smoke check: starts the Empire OS server, waits for GET /health to
 // answer {"status":"online"}, checks the remote-app wiring through a fake
 // Boss Listers, then shuts it down. Exits non-zero on failure.
+//
+//   node scripts/smoke-server.mjs              EMPIRE_API_KEY unset (auth off, CORS '*')
+//   node scripts/smoke-server.mjs --with-key   EMPIRE_API_KEY set to a random throwaway key: checks the
+//                                              header, the /unlock cookie, the HTML redirect and CORS
 import { spawn } from 'node:child_process'
+import { randomBytes } from 'node:crypto'
 import { mkdtempSync, rmSync } from 'node:fs'
 import http from 'node:http'
 import { tmpdir } from 'node:os'
@@ -14,6 +19,11 @@ const dataDir = mkdtempSync(path.join(tmpdir(), 'empire-smoke-'))
 const base = `http://localhost:${port}`
 const url = `${base}/health`
 const SMOKE_KEY = 'smoke-test-key'
+const WITH_KEY = process.argv.includes('--with-key')
+// A random throwaway key for this run only (never printed).
+const EMPIRE_KEY = WITH_KEY ? randomBytes(32).toString('hex') : ''
+const keyHeaders = WITH_KEY ? { 'X-Empire-Api-Key': EMPIRE_KEY } : {}
+const DASHBOARD = 'http://localhost:3000'
 
 // A stand-in for Boss Listers (no real app, data or selling site): just its Empire OS routes.
 const fakeCalls = []
@@ -29,7 +39,9 @@ await new Promise((r) => fake.listen(0, '127.0.0.1', r))
 const fakeUrl = `http://127.0.0.1:${fake.address().port}`
 
 const child = spawn('pnpm', ['--filter', '@empire-os/server', 'start'], {
-  env: { ...process.env, PORT: port, HOST: 'localhost', DATA_DIR: dataDir, BOSSLISTERS_BASE_URL: fakeUrl, BOSSLISTERS_EMPIRE_KEY: SMOKE_KEY },
+  env: { ...process.env, PORT: port, HOST: 'localhost', DATA_DIR: dataDir, BOSSLISTERS_BASE_URL: fakeUrl, BOSSLISTERS_EMPIRE_KEY: SMOKE_KEY,
+    // Set explicitly (also when empty) so a local apps/empire-os-server/.env cannot change the mode.
+    EMPIRE_API_KEY: EMPIRE_KEY, EMPIRE_ALLOWED_ORIGINS: '' },
   stdio: ['ignore', 'pipe', 'pipe'],
   detached: true,
 })
@@ -53,13 +65,57 @@ async function checkRemoteApps(body) {
     if (!body.modules?.[id]) return `/health has no ${id} module`
   }
   if (body.modules.bosslisters.status !== 'healthy') return `bosslisters is ${body.modules.bosslisters.status}, expected healthy (fake app at ${fakeUrl})`
-  const res = await fetch(`${base}/bosslisters/empire/listings?limit=3`)
+  const res = await fetch(`${base}/bosslisters/empire/listings?limit=3`, { headers: keyHeaders })
   const listings = await res.json()
   if (res.status !== 200 || listings.items?.[0]?.sku !== 'SMOKE-1') return `/bosslisters/empire/listings answered ${res.status}: ${JSON.stringify(listings)}`
   if (listings.query !== '/empire/listings?limit=3') return `query string not passed on: ${listings.query}`
   if (!fakeCalls.some((c) => c.url?.startsWith('/empire/listings') && c.key === SMOKE_KEY)) return 'X-Empire-Key was not sent to Boss Listers'
-  const blocked = await fetch(`${base}/bosslisters/api/stock`)
+  const blocked = await fetch(`${base}/bosslisters/api/stock`, { headers: keyHeaders })
   if (blocked.status !== 404 || fakeCalls.some((c) => c.url === '/api/stock')) return 'an undeclared Boss Listers route was proxied'
+  return WITH_KEY ? checkKeyMode() : checkOpenMode()
+}
+
+// EMPIRE_API_KEY unset: everything open, any origin (unchanged behaviour).
+async function checkOpenMode() {
+  const res = await fetch(`${base}/providers`, { headers: { Origin: 'http://elsewhere.test' } })
+  if (res.status !== 200) return `/providers answered ${res.status} with no key set, expected 200`
+  if (res.headers.get('access-control-allow-origin') !== '*') return `CORS is ${res.headers.get('access-control-allow-origin')}, expected *`
+  return null
+}
+
+// EMPIRE_API_KEY set.
+async function checkKeyMode() {
+  const get = (p, headers = {}, extra = {}) => fetch(`${base}${p}`, { headers, redirect: 'manual', ...extra })
+  let r = await get('/providers')
+  if (r.status !== 401) return `/providers without the key answered ${r.status}, expected 401`
+  if (!(await r.json()).locked) return '401 body has no locked flag'
+  if ((r = await get('/providers', { 'X-Empire-Api-Key': 'wrong' })).status !== 401) return `wrong key answered ${r.status}, expected 401`
+  if ((r = await get('/providers', keyHeaders)).status !== 200) return `right key answered ${r.status}, expected 200`
+  if ((r = await get('/bosslisters/empire/listings?limit=1')).status !== 401) return `proxy without key answered ${r.status}, expected 401`
+
+  // The server's own HTML pages: a browser without the key is sent to /unlock.
+  r = await get('/empire-dashboard/', { Accept: 'text/html' })
+  if (r.status !== 302 || !r.headers.get('location')?.startsWith('/unlock?next=')) return `locked page answered ${r.status} → ${r.headers.get('location')}, expected 302 → /unlock`
+  if ((r = await get('/unlock')).status !== 200 || !(await r.text()).includes('Empire OS is locked')) return '/unlock page did not load'
+  const form = (key) => ({ method: 'POST', redirect: 'manual', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ key, next: '/empire-dashboard/' }) })
+  if ((r = await fetch(`${base}/unlock`, form('wrong'))).status !== 401 || r.headers.get('set-cookie')) return `wrong key on /unlock answered ${r.status}`
+  r = await fetch(`${base}/unlock`, form(EMPIRE_KEY))
+  const setCookie = r.headers.get('set-cookie') ?? ''
+  if (r.status !== 303 || r.headers.get('location') !== '/empire-dashboard/') return `/unlock answered ${r.status} → ${r.headers.get('location')}`
+  if (!/HttpOnly/.test(setCookie) || !/SameSite=Strict/.test(setCookie) || setCookie.includes(EMPIRE_KEY)) return 'session cookie is not HttpOnly/SameSite=Strict, or contains the key'
+  const cookie = setCookie.split(';')[0]
+  if ((r = await get('/providers', { Cookie: cookie })).status !== 200) return `cookie session answered ${r.status}, expected 200`
+  if ((r = await get('/empire-dashboard/', { Cookie: cookie, Accept: 'text/html' })).status !== 200) return `dashboard page with cookie answered ${r.status}`
+  r = await get('/goose/run', { Cookie: cookie, Origin: 'http://elsewhere.test', 'Content-Type': 'application/json' }, { method: 'POST', body: '{}' })
+  if (r.status !== 403) return `cross-site POST riding the cookie answered ${r.status}, expected 403`
+
+  // CORS: only the dashboard origin (default http://localhost:3000).
+  r = await fetch(`${base}/providers`, { method: 'OPTIONS', headers: { Origin: DASHBOARD, 'Access-Control-Request-Headers': 'x-empire-api-key' } })
+  if (r.status !== 204 || r.headers.get('access-control-allow-origin') !== DASHBOARD) return `preflight from ${DASHBOARD} answered ${r.status} / ${r.headers.get('access-control-allow-origin')}`
+  r = await fetch(`${base}/providers`, { method: 'OPTIONS', headers: { Origin: 'http://elsewhere.test' } })
+  if (r.status !== 403 || r.headers.get('access-control-allow-origin')) return `preflight from another origin answered ${r.status} / ${r.headers.get('access-control-allow-origin')}`
+  r = await get('/health', { Origin: 'http://elsewhere.test' })
+  if (r.status !== 200 || r.headers.get('access-control-allow-origin')) return '/health must stay open but must not grant CORS to other origins'
   return null
 }
 
@@ -75,7 +131,7 @@ while (Date.now() < deadline && !exited) {
         console.error(`Smoke check failed: ${problem}`)
         break
       }
-      console.log(`Server answered ${url}: status=${body.status}, modules=${Object.keys(body.modules ?? {}).length}; bosslisters proxied OK`)
+      console.log(`Server answered ${url}: status=${body.status}, modules=${Object.keys(body.modules ?? {}).length}; bosslisters proxied OK; ${WITH_KEY ? 'EMPIRE_API_KEY set: header, /unlock cookie, redirect and CORS OK' : 'EMPIRE_API_KEY unset: open, CORS *'}`)
       ok = true
       break
     }

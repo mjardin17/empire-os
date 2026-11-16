@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   BookOpen, Play, RefreshCw, AlertTriangle, CheckCircle2, FileText, Download, PlugZap, Factory,
 } from "lucide-react";
-import { EMPIRE_OS } from "../lib/empireOs";
+import { EMPIRE_OS, LOCKED_MESSAGE } from "../lib/empireOs";
 
 // The panel talks to the Empire OS server, which proxies /storyforge/* to the Bookmaker
 // book studio (STORYFORGE_BASE_URL on the server, default http://localhost:3010).
@@ -81,7 +81,10 @@ export default function StoryForge() {
     // 2. List books and factory runs through Empire OS.
     try {
       const { status, body } = await fetchJson(`${EMPIRE_OS}/storyforge/empire/books`);
-      if (status === 502) {
+      if (status === 401) {
+        setConnection({ state: "connected", url: bookmakerUrl || "" });
+        setListError(LOCKED_MESSAGE);
+      } else if (status === 502) {
         setConnection({ state: "bookmaker-down", url: bookmakerUrl, detail: body?.detail || "Bookmaker did not answer" });
       } else if (status !== 200 || !body?.success) {
         setConnection({ state: "connected", url: bookmakerUrl || "" });
@@ -110,7 +113,9 @@ export default function StoryForge() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: title.trim(), niche: niche.trim() || undefined, dryRun: validateOnly }),
       }, 15000);
-      if (status === 502) {
+      if (status === 401) {
+        setStartResult({ ok: false, message: LOCKED_MESSAGE });
+      } else if (status === 502) {
         setStartResult({ ok: false, message: "Bookmaker is not running, so the book was not started." });
         setConnection({ state: "bookmaker-down", detail: body?.detail || "Bookmaker did not answer" });
       } else if (!body?.success) {

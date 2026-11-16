@@ -33,11 +33,17 @@ jobs:
       - name: Core tests
         run: pnpm test
 
+      - name: Dashboard tests (Empire key)
+        run: pnpm test:dashboard
+
       - name: Web build
         run: pnpm --filter @empire-os/web build
 
       - name: Server boot smoke check
         run: pnpm smoke:server
+
+      - name: Server boot smoke check (EMPIRE_API_KEY set)
+        run: pnpm smoke:server:key
 
   api-validate:
     runs-on: ubuntu-latest

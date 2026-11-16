@@ -15,4 +15,4 @@ export { FileWorkflowEngine } from './file-workflow-engine.impl.js'
 // Shared / router
 export { DefaultAIRouter } from './ai-router.impl.js'
 export type { AIProviderAdapter, ConfigurableAIRouter } from './ai-router.impl.js'
-export { HttpModuleGateway } from './module-gateway.impl.js'
+export { HttpModuleGateway, type HttpModuleGatewayOptions } from './module-gateway.impl.js'
